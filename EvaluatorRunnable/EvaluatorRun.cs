@@ -10,10 +10,15 @@ namespace FormulaEvaluator_runable
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Enter an equation to solve");
-            String input = Console.ReadLine();
-            int result = FormulaEvaluator.Evaluator.Evaluate(input, varlookup);
-            Console.WriteLine("" + result);
+            while(true)
+            {
+                Console.WriteLine("Enter an equation to solve");
+                String input = Console.ReadLine();
+                if (input == "Exit" || input == "exit") return;
+                int result = FormulaEvaluator.Evaluator.Evaluate(input, varlookup);
+                Console.WriteLine("The answer is: " + result);
+            }
+           
         }
 
         private static int varlookup(string varible)
