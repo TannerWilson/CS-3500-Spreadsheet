@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace FormulaEvaluator
@@ -22,6 +23,9 @@ namespace FormulaEvaluator
         /// <returns></returns>
         public static int Evaluate(String exp, Lookup variableEvaluator)
         {
+            Delegate lookUp = variableEvaluator;
+
+            exp.Trim();
             // Array of individual character strings of "exp"
             string[] substrings = Regex.Split(exp, "(\\()|(\\))|(-)|(\\+)|(\\*)|(/)");
 
@@ -45,19 +49,8 @@ namespace FormulaEvaluator
                     {
                         String expression = operators.Pop();
                         int value2 = values.Pop();
-                        if (expression == "*")
-                        {
-                            value1 = value1 * value2;
-                            values.Push(value1);
-                        }
-                        else
-                        {
-                            // Ensures no dividing by zero
-                            if (value2 == 0) throw new ArgumentException("Divided by zero");
-                            value1 = value1 / value2;
-                            values.Push(value1);
-                        }
-
+                        // Evaluate and push
+                        performOperation(expression, value1, value2, values);
                     }
                 }
 
@@ -65,58 +58,44 @@ namespace FormulaEvaluator
 
                 else
                 {
-                    // t is either a + or -
-                    if (t == "+" || t == "-")
+                    if (t == "+" || t == "-") // t is either a + or -
                     {
-                        // Ensure enough values are in the values stack
-                        if (values.Count < 2)
-                            throw new ArgumentException("Not enough values in stack to perform operation");
+                        if (operators.Count != 0) // Operators stack is empty, just push
+                        {
+                            // Check if the top operation in the operators stack is a + or -
+                            String topOp = operators.Peek();
+                            if (topOp == "+" || topOp == "-")
+                            {
+                                // Ensure enough values are in the values stack
+                                if (values.Count < 2)
+                                    throw new ArgumentException("Not enough values in stack to perform operation");
 
-                        // Pop top two values and top operator
-                        int val1, val2;
-                        val1 = values.Pop();
-                        val2 = values.Pop();
-                        String operation = operators.Pop();
-                        // Evaluate using given operator
-                        if (operation == "*")
-                        {
-                            val1 = val1 * val2;
-                            values.Push(val1);
+                                // Pop top two values and top operator
+                                int val1, val2;
+                                val1 = values.Pop();
+                                val2 = values.Pop();
+                                String operation = operators.Pop();
+
+                                // Evaluate using given operator
+                                performOperation(operation, val1, val2, values);
+                            }
                         }
-                        else if (operation == "/")
-                        {
-                            // Ensures no dividing by zero
-                            if (val2 == 0) throw new ArgumentException("Divided by zero");
-                            val1 = val1 / val2;
-                            values.Push(val1);
-                        }
-                        else if (operation == "+")
-                        {
-                            val1 = val1 + val2;
-                            values.Push(val1);
-                        }
-                        else if (operation == "-")
-                        {
-                            val1 = val1 - val2;
-                            values.Push(val1);
-                        }
+
                         // Push t onto operators
                         operators.Push(t);
                     }
 
-                    // t is either a * or /
-                    if (t == "*" || t == "/")
+                    else if (t == "*" || t == "/") // t is either a * or /
                     {
                         operators.Push(t);
                     }
 
-                    // t is a ( 
-                    if (t == "(")
+                    else if (t == "(") // t is a ( 
                     {
                         operators.Push(t);
                     }
-                    // t is a )
-                    if (t == ")")
+
+                    else if (t == ")") // t is a )
                     {
                         String top = operators.Peek();
                         // Evaluate addition and subtraction
@@ -132,22 +111,13 @@ namespace FormulaEvaluator
                             val2 = values.Pop();
                             String operation = operators.Pop();
                             // Evaluate using given operator
-                            if (operation == "+")
-                            {
-                                val1 = val1 + val2;
-                                values.Push(val1);
-                            }
-                            else
-                            {
-                                val1 = val1 - val2;
-                                values.Push(val1);
-                            }
-
+                            performOperation(operation, val1, val2, values);
                         }
+
                         // Pop next operator to ensure it is a (, if not throw exception
                         String leftParand = operators.Pop();
                         if (leftParand != "(")
-                            throw new ArgumentException("Left parand not where one was expected");
+                            throw new ArgumentException("Left parand was expected, but not found");
 
                         // Evaluate mutiplicaton and division
                         if (top == "*" || top == "/")
@@ -162,18 +132,35 @@ namespace FormulaEvaluator
                             val2 = values.Pop();
                             String operation = operators.Pop();
                             // Evaluate using given operator
-                            if (operation == "*")
-                            {
-                                val1 = val1 * val2;
-                                values.Push(val1);
-                            }
-                            else
-                            {
-                                // Ensures no dividing by zero
-                                if (val2 == 0) throw new ArgumentException("Divided by zero");
-                                val1 = val1 / val2;
-                                values.Push(val1);
-                            }
+                            performOperation(operation, val1, val2, values);
+                        }
+                    }
+                    else // Operation possiblities are exhausted, so must be a varible
+                    {
+                        int valribleValue;
+                        // Look up value of varible
+                        try
+                        {
+                            valribleValue = variableEvaluator(t);
+                        }
+                        catch
+                        { // throw exception if no value is found for varible
+                            throw new ArgumentException("No value found for varible");
+                        }
+
+
+                        // If expression stack is empty, push t
+                        if (operators.Count == 0 || values.Count == 0)
+                        {
+                            values.Push(valribleValue);
+                        }
+                        // If operator is * or /, pop and evaluate accordingly and push back to values stack
+                        else if (operators.Peek() == "*" || operators.Peek() == "/")
+                        {
+                            String expression = operators.Pop();
+                            int value2 = values.Pop();
+                            // Evaluate and push
+                            performOperation(expression, valribleValue, value2, values);
                         }
                     }
 
@@ -181,7 +168,7 @@ namespace FormulaEvaluator
             }
             // Array of strings is exhausted
             if (operators.Count == 0) // No more operations
-            { 
+            {
                 if (values.Count > 1) throw new ArgumentException("More than one finishing value");
                 return values.Pop();
             }
@@ -209,6 +196,42 @@ namespace FormulaEvaluator
                 return val1;
             }
         }
+
+        /// <summary>
+        /// Per fprms the given operator passed as a parameter to the two input values and
+        /// pushes the result back on to the given stack.
+        /// </summary>
+        /// <param name="operation"></param>
+        /// <param name="value1"></param>
+        /// <param name="value2"></param>
+        /// <param name="values"></param>
+        /// <returns></returns>
+        public static void performOperation(String operation, int value1, int value2, Stack<int> values)
+        {
+            int result = 0;
+
+            if (operation == "*")
+            {
+                result = value1 * value2;
+                values.Push(result);
+            }
+            else if (operation == "/")
+            {
+                // Ensures no dividing by zero
+                if (value2 == 0) throw new ArgumentException("Divided by zero");
+                result = value1 / value2;
+                values.Push(result);
+            }
+            else if (operation == "+")
+            {
+                result = value1 + value2;
+                values.Push(result);
+            }
+            else if (operation == "-")
+            {
+                result = value1 - value2;
+                values.Push(result);
+            }
+        }
     }
 }
-
