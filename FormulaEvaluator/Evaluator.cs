@@ -223,8 +223,8 @@ namespace FormulaEvaluator
             else if (operation == "/")
             {
                 // Ensures no dividing by zero
-                if (value2 == 0) throw new ArgumentException("Divided by zero");
-                result = value1 / value2;
+                if (value1 == 0) throw new ArgumentException("Divided by zero");
+                result = value2 / value1;
                 values.Push(result);
             }
             else if (operation == "+")
