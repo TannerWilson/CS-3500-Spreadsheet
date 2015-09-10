@@ -5,7 +5,7 @@ VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EvaluatorRunnable", "EvaluatorRunnable\EvaluatorRunnable.csproj", "{1323D3FB-7A25-4F7D-BF9A-2940C0FB27EC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FormulaEvaluator", "ClassLibrary1\FormulaEvaluator.csproj", "{DDB8CD37-D3D1-4E66-B950-E58C7AF28E36}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FormulaEvaluator", "FormulaEvaluator\FormulaEvaluator.csproj", "{DDB8CD37-D3D1-4E66-B950-E58C7AF28E36}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

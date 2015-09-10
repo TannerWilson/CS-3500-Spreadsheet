@@ -36,6 +36,12 @@ namespace FormulaEvaluator
             for (int i = 0; i < substrings.Length; i++)
             {
                 String t = substrings[i];
+                // Ensure t is not whitespace
+                if (t == " " || t == "")
+                {
+                    continue;
+                }
+
                 int value1; // Used to store parsed int value and the final pushed result
                 if (Int32.TryParse(t, out value1)) // t is an integer
                 {
@@ -141,16 +147,9 @@ namespace FormulaEvaluator
                     {
                         int valribleValue;
                         // Look up value of varible
-                        try
-                        {
+                      
                             valribleValue = variableEvaluator(t);
-                        }
-                        catch
-                        { // throw exception if no value is found for varible
-                            throw new ArgumentException("No value found for varible");
-                        }
-
-
+                      
                         // If expression stack is empty, push t
                         if (operators.Count == 0 || values.Count == 0)
                         {
@@ -163,6 +162,10 @@ namespace FormulaEvaluator
                             int value2 = values.Pop();
                             // Evaluate and push
                             performOperation(expression, valribleValue, value2, values);
+                        }
+                        else
+                        {
+                            values.Push(valribleValue);
                         }
                     }
 

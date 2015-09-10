@@ -50,7 +50,7 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ClassLibrary1\FormulaEvaluator.csproj">
+    <ProjectReference Include="..\FormulaEvaluator\FormulaEvaluator.csproj">
       <Project>{ddb8cd37-d3d1-4e66-b950-e58c7af28e36}</Project>
       <Name>FormulaEvaluator</Name>
     </ProjectReference>
