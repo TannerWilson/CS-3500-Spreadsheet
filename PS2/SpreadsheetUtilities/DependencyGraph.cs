@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
+
 namespace SpreadsheetUtilities
 {
 
@@ -121,7 +122,9 @@ namespace SpreadsheetUtilities
             LinkedList<String> dependents;
             if (graph.TryGetValue(s, out dependents))
                 return dependents;
-            else return null;
+         
+            else return new LinkedList<string>();
+
         }
 
         /// <summary>
@@ -133,7 +136,7 @@ namespace SpreadsheetUtilities
             // loop through each list in the dictionary to check for s
             for (int i = 0; i < graph.Count; i++)
             {
-                KeyValuePair<String, LinkedList<String>> pair = graph.FirstOrDefault();
+                KeyValuePair<String, LinkedList<String>> pair = graph.ElementAt(i);
                 if (pair.Value.Contains(s)) // If s is found in the value list
                     dependees.AddLast(pair.Key);
             }
@@ -186,8 +189,8 @@ namespace SpreadsheetUtilities
                 // Pull the list assoiated with key s
                 LinkedList<String> dependents = graph[s];
                 // If t is in the list, remove it
-                if (dependents.Contains(t))
-                    dependents.Remove(t);
+                if (dependents.Remove(t))
+                    return;
                 else return; // t was not one of s's dependents
             }
             else return; // No key s was found so there is no ordered value (s,t)
@@ -219,6 +222,14 @@ namespace SpreadsheetUtilities
         /// </summary>
         public void ReplaceDependees(string s, IEnumerable<string> newDependees)
         {
+            // Remove all ordered pairs with s as a dependee
+            foreach (LinkedList<String> list in graph.Values)
+                list.Remove(s);
+            
+            // Add evrey dependee in newDependees
+            foreach (String dependee in newDependees)
+                AddDependency(dependee, s);
+        
         }
 
     }
