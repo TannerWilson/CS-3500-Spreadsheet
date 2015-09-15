@@ -3,6 +3,72 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
 
+
+namespace SpreadsheetUtilities.Tests
+{
+    public static void main (String[] args)
+    {
+
+    }
+    [TestClass()]
+    public class PS2Tests
+    {
+        [TestMethod()]
+        public void DependencyGraphTest()
+        {
+            Assert.Fail();
+        }
+
+        [TestMethod()]
+        public void HasDependentsTest()
+        {
+            Assert.Fail();
+        }
+
+        [TestMethod()]
+        public void HasDependeesTest()
+        {
+            Assert.Fail();
+        }
+
+        [TestMethod()]
+        public void GetDependentsTest()
+        {
+            Assert.Fail();
+        }
+
+        [TestMethod()]
+        public void GetDependeesTest()
+        {
+            Assert.Fail();
+        }
+
+        [TestMethod()]
+        public void AddDependencyTest()
+        {
+            Assert.Fail();
+        }
+
+        [TestMethod()]
+        public void RemoveDependencyTest()
+        {
+            Assert.Fail();
+        }
+
+        [TestMethod()]
+        public void ReplaceDependentsTest()
+        {
+            Assert.Fail();
+        }
+
+        [TestMethod()]
+        public void ReplaceDependeesTest()
+        {
+            Assert.Fail();
+        }
+    }
+}
+
 namespace PS2GradingTests
 {
     /// <summary>
