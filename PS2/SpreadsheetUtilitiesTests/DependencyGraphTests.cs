@@ -303,13 +303,58 @@ namespace SpreadsheetUtilities.Tests
         [TestMethod()]
         public void ReplaceDependentsTest()
         {
-            Assert.Fail();
+            DependencyGraph test = new DependencyGraph();
+            test.AddDependency("t", "m");
+            test.AddDependency("t", "f");
+            test.AddDependency("t", "o");
+            test.AddDependency("t", "d");
+            test.AddDependency("t", "e");
+            test.AddDependency("t", "f");
+            test.AddDependency("d", "f");
+            test.AddDependency("m", "f");
+
+            LinkedList<String> correct = new LinkedList<String>();
+            correct.AddLast("a");
+            correct.AddLast("b");
+            correct.AddLast("c");
+            correct.AddLast("d");
+            correct.AddLast("e");
+            correct.AddLast("f");
+
+            test.ReplaceDependents("t", correct);
+            CollectionAssert.AreEqual(correct, (LinkedList<String>) test.GetDependents("t"));
         }
 
         [TestMethod()]
         public void ReplaceDependeesTest()
         {
-            Assert.Fail();
+            DependencyGraph test = new DependencyGraph();
+            test.AddDependency("t", "m");
+            test.AddDependency("t", "f");
+            test.AddDependency("t", "o");
+            test.AddDependency("t", "d");
+            test.AddDependency("t", "t");
+            test.AddDependency("t", "f");
+            test.AddDependency("d", "t");
+            test.AddDependency("m", "t");
+
+            LinkedList<String> adding = new LinkedList<String>();
+            adding.AddLast("a");
+            adding.AddLast("b");
+            adding.AddLast("c");
+            adding.AddLast("d");
+            adding.AddLast("e");
+            adding.AddLast("f");
+
+            test.ReplaceDependees("t", adding);
+
+            Assert.IsTrue(test.HasDependees("t"));
+            Assert.IsTrue(test.HasDependents("a"));
+            Assert.IsTrue(test.HasDependents("b"));
+            Assert.IsTrue(test.HasDependents("c"));
+            Assert.IsTrue(test.HasDependents("d"));
+            Assert.IsTrue(test.HasDependents("e"));
+            Assert.IsTrue(test.HasDependents("f"));
         }
     }
 
