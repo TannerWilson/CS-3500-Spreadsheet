@@ -120,6 +120,7 @@ namespace SpreadsheetUtilities
         public IEnumerable<string> GetDependents(string s)
         {
             LinkedList<String> dependents;
+            // If the key s is found, poplate dependents with its associated list
             if (graph.TryGetValue(s, out dependents))
                 return dependents;
          
@@ -239,7 +240,6 @@ namespace SpreadsheetUtilities
             // Add evrey dependee in newDependees
             foreach (String dependee in newDependees)
                 AddDependency(dependee, s);
-        
         }
 
     }
