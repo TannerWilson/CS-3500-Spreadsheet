@@ -189,8 +189,18 @@ namespace SpreadsheetUtilities
                 // Pull the list assoiated with key s
                 LinkedList<String> dependents = graph[s];
                 // If t is in the list, remove it
-                if (dependents.Remove(t))
+                if (dependents.Contains(t))
+                {
+                    if(dependents.Count <= 1) // Only one value correlates to the key
+                    {
+                        graph.Remove(s); // Remove key value pair
+                    }
+                    else
+                    {
+                        dependents.Remove(t);
+                    }
                     return;
+                }
                 else return; // t was not one of s's dependents
             }
             else return; // No key s was found so there is no ordered value (s,t)

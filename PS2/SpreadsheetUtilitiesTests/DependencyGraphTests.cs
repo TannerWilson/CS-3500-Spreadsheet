@@ -46,20 +46,20 @@ namespace SpreadsheetUtilities.Tests
 
             // Testing removing
 
-            //test.RemoveDependency("a", "t");
-            //Assert.IsFalse(test.HasDependents("a"));
-            //Assert.IsTrue(test.HasDependents("b"));
-            //Assert.IsTrue(test.HasDependents("c"));
+            test.RemoveDependency("a", "t");
+            Assert.IsFalse(test.HasDependents("a"));
+            Assert.IsTrue(test.HasDependents("b"));
+            Assert.IsTrue(test.HasDependents("c"));
 
-            //test.RemoveDependency("b", "t");
-            //Assert.IsFalse(test.HasDependents("a"));
-            //Assert.IsFalse(test.HasDependents("b"));
-            //Assert.IsTrue(test.HasDependents("c"));
+            test.RemoveDependency("b", "t");
+            Assert.IsFalse(test.HasDependents("a"));
+            Assert.IsFalse(test.HasDependents("b"));
+            Assert.IsTrue(test.HasDependents("c"));
 
-            //test.RemoveDependency("c", "t");
-            //Assert.IsFalse(test.HasDependents("a"));
-            //Assert.IsFalse(test.HasDependents("b"));
-            //Assert.IsFalse(test.HasDependents("c"));
+            test.RemoveDependency("c", "t");
+            Assert.IsFalse(test.HasDependents("a"));
+            Assert.IsFalse(test.HasDependents("b"));
+            Assert.IsFalse(test.HasDependents("c"));
         }
 
         [TestMethod()]
