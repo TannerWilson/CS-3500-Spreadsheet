@@ -123,7 +123,16 @@ namespace FormulaEvaluator
                         }
 
                         // Pop next operator to ensure it is a (, if not throw exception
-                        String leftParand = operators.Pop();
+                        String leftParand = "";
+                        try
+                        {
+                            leftParand = operators.Pop();
+                        } catch (InvalidOperationException)
+                        {
+                            // Trow exception if no values are in the stack when we pop.
+                            throw new ArgumentException("Too few operators");
+                        }
+                            
                         if (leftParand != "(")
                             throw new ArgumentException("Left parand was expected, but not found");
 
@@ -150,7 +159,7 @@ namespace FormulaEvaluator
                       
                             valribleValue = variableEvaluator(t);
                       
-                        // If expression stack is empty, push t
+                        // If operator stack is empty, push t
                         if (operators.Count == 0 || values.Count == 0)
                         {
                             values.Push(valribleValue);
@@ -180,7 +189,7 @@ namespace FormulaEvaluator
             else // Still one + or - left to evaluate
             {
                 // Not excatly one operator or two values
-                if (values.Count > 2) throw new ArgumentException("More than two finishing value");
+                if (values.Count != 2) throw new ArgumentException("More than two finishing value");
                 if (operators.Count > 1) throw new ArgumentException("More than one finishing operator");
 
                 // Pop top two values and top operator
@@ -189,16 +198,9 @@ namespace FormulaEvaluator
                 val2 = values.Pop();
                 String operation = operators.Pop();
                 // Evaluate using given operator
-                if (operation == "+")
-                {
-                    val1 = val1 + val2;
-                }
-                else
-                {
-                    val1 = val1 - val2;
-                }
+                performOperation(operation, val1, val2, values);
                 // Return final value
-                return val1;
+                return values.Pop();
             }
         }
 
@@ -234,10 +236,22 @@ namespace FormulaEvaluator
             }
             else if (operation == "-")
             {
-                result = value1 - value2;
+                result = value2 - value1;
                 values.Push(result);
             }
         }
+        //private static T Pop(this Stack<T> stk)
+        //{
+        //    try
+        //    {
+        //        return stk.Pop();
+        //    } catch (InvalidOperationException)
+
+        //    {
+        //        // Trow exception if no values are in the stack when we pop.
+        //        throw new ArgumentException("Too few operators");
+        //    }
+        //}
     }
 }
 

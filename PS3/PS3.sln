@@ -5,6 +5,8 @@ VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Formula", "Formula\Formula.csproj", "{A0C78227-F56F-4C5E-B20C-5C39F29A9856}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FormulaTests", "FormulaTests\FormulaTests.csproj", "{7F96C12C-9039-4B10-B1E7-348839579E0C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{A0C78227-F56F-4C5E-B20C-5C39F29A9856}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A0C78227-F56F-4C5E-B20C-5C39F29A9856}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A0C78227-F56F-4C5E-B20C-5C39F29A9856}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7F96C12C-9039-4B10-B1E7-348839579E0C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7F96C12C-9039-4B10-B1E7-348839579E0C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7F96C12C-9039-4B10-B1E7-348839579E0C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7F96C12C-9039-4B10-B1E7-348839579E0C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
