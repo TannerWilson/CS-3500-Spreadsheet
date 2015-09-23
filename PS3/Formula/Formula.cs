@@ -39,7 +39,9 @@ namespace SpreadsheetUtilities
         public Formula(String formula) :
             this(formula, s => s, s => true)
         {
-
+            if (!isFormula(formula))
+                throw new FormulaFormatException("Input string was an invalid formula");
+            formulaString = formula;
         }
 
         /// <summary>
@@ -66,14 +68,10 @@ namespace SpreadsheetUtilities
         /// </summary>
         public Formula(String formula, Func<string, string> normalize, Func<string, bool> isValid)
         {
-            String[] form = formula.Split(null);
-            foreach (String s in form)
-            {
-                if 
-            }
-
-
+            // Normalize string
             formulaString = normalize(formula);
+            if(!isFormula(formulaString))
+                throw new FormulaFormatException("Input string was an invalid formula");
             // Check if the formula is valid after normalization
             if (!isValid(formulaString)) 
                 throw new FormulaFormatException("Input string was an invalid formula");
@@ -119,9 +117,13 @@ namespace SpreadsheetUtilities
         /// </summary>
         public IEnumerable<String> GetVariables()
         {
-            LinkedList<String> result = new LinkedList<String>();
-            result = (LinkedList<String>) GetTokens(formulaString);
-
+            HashSet<string> result = new HashSet<string>();
+            string[] tokens = GetTokens(formulaString).ToArray<string>();
+            foreach(String s in tokens)
+            {
+                if (isVarible(s))
+                    result.Add(s);
+            }
             return result;
         }
 
@@ -159,9 +161,30 @@ namespace SpreadsheetUtilities
         /// </summary>
         public override bool Equals(object obj)
         {
-            if (formulaString == (String) obj)
+            // Preliminary null checks
+            if (this == null && obj == null)
                 return true;
-            return false;
+            if (this == null && obj != null)
+                return false;
+
+            // Generate arrays of the tokens of each formula expression
+            string[] formula1 = GetTokens(formulaString).ToArray<string>();
+            string[] formula2 = GetTokens((String) obj).ToArray<string>();
+
+            // If the two are equal the arrays should be the same size
+            if (formula1.Length != formula2.Length)
+                return false;
+
+            // Step through each entry in the arrays
+            for(int i = 0; i < formula1.Length; i++)
+            {
+                // If both intries are equal, step to next
+                if (formula1[i] == formula2[i])
+                    continue;
+                // Return false if not
+                else return false;
+            }
+            return true;
         }
 
         /// <summary>
@@ -171,13 +194,14 @@ namespace SpreadsheetUtilities
         /// </summary>
         public static bool operator ==(Formula f1, Formula f2)
         {
+            // Preliminary null checks
             if (f1 == null & f2 == null)
                 return true;
             if (f1 == null & f2 != null)
                 return false;
-            if (f1.Equals(f2))
-                return true;
-            return false;
+
+            // Use defined equals method
+            return f1.Equals(f2);
         }
 
         /// <summary>
@@ -187,13 +211,14 @@ namespace SpreadsheetUtilities
         /// </summary>
         public static bool operator !=(Formula f1, Formula f2)
         {
+            // Preliminary null checks
             if (f1 == null & f2 == null)
                 return false;
             if (f1 == null & f2 != null)
                 return true;
-            if (f1.Equals(f2))
-                return false;
-            return false;
+
+            // Use defined equals method
+            return f1.Equals(f2);
         }
 
         /// <summary>
@@ -203,6 +228,7 @@ namespace SpreadsheetUtilities
         /// </summary>
         public override int GetHashCode()
         {
+            // Use string's default hash code
             return formulaString.GetHashCode();
         }
 
@@ -236,7 +262,157 @@ namespace SpreadsheetUtilities
             }
 
         }
+
+        /// <summary>
+        /// Used to check the validity of a given formula string. Restraints follow the 
+        /// ones given in the formula documentation, and the rules given in the 
+        /// assignment document on the class webpage.
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns></returns>
+        private static bool isFormula(String input)
+        {
+            // ints used to count the number of parands
+            int openParands = 0;
+            int closeParands = 0;
+
+            // Double used to store double values (don't actually care about value stored)
+            double value;
+
+            // Sperarate the tokens in the string
+            String[] tokens = GetTokens(input).ToArray<String>();
+
+            // Tokens must have at leatst one token
+            if (tokens.Length < 1)
+                throw new FormulaFormatException("Formula cannot be empty");
+
+            // First token must be a double, varible or a '('
+            if (!Double.TryParse(tokens[0], out value) || !isVarible(tokens[0]) || !(tokens[0] == "("))
+                throw new FormulaFormatException("Invalad first token");
+
+            // Last token must be a double, varible or a ')'
+            if (!Double.TryParse(tokens[tokens.Length-1], out value) || !isVarible(tokens[tokens.Length - 1])
+                || !(tokens[tokens.Length - 1] == ")"))
+                throw new FormulaFormatException("Invalad last token");
+
+            // Iterate over each token to ensure validity
+            for (int i = 1; i < tokens.Length - 1; i++)
+            {
+                // Check if the token is an accepted string
+                if (isOperator(tokens[i]) || isVarible(tokens[i])
+                    || Double.TryParse(tokens[i], out value) || isParand(tokens[i]))
+                {
+                    // Token is acceptable, check each syntatic rule
+                    if (tokens[i] == "(")
+                    {
+                        openParands++;
+                    }
+
+                    // Right Parentheses Rule
+                    if (tokens[i] == ")")
+                    {
+                        closeParands++;
+                        if (closeParands > openParands)
+                            throw new FormulaFormatException("Too many closing parentheses");
+                    }
+
+                    // Parenthesis Following Rule
+                    if (tokens[i] == "(" || isOperator(tokens[i]))
+                    {
+                        /*
+                         Token following an opening parenthesis oroperator 
+                         must be either a number, a variable, or an opening parenthesis.
+                        */
+                        if (!(isVarible(tokens[i=1]) || Double.TryParse(tokens[i+1], out value) || tokens[i+1] == "("))
+                            throw new FormulaFormatException("Invalid token folowing an open parand or operator");
+                    }
+
+                    // Extra Following Rule
+                    if (isVarible(tokens[i]) || Double.TryParse(tokens[i], out value) || tokens[i] == ")")
+                    {
+                        /*
+                        Token following a number, a variable, or a closing parenthesis
+                        must be either an operator or a closing parenthesis.
+                        */
+                        if(!(isOperator(tokens[i+1]) || tokens[i+1] == ")"))
+                            throw new FormulaFormatException("Invalid token folowing a number, variable, or closing parenthesis");
+                    }
+
+                    // Ensure the number of parenthesis are equal
+                    if (openParands != closeParands)
+                        throw new FormulaFormatException("Unbalanced parands");
+
+                } // token is not an accepted operator or varible name
+                else return false;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Checks if the given input string is a valid varible name.
+        /// Valid varible names are defined as strings that consist of a letter 
+        /// or underscore followed by zero or more letters, underscores, or digits.
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns></returns>
+        private static bool isVarible(string input)
+        {
+            // Convert the string into a character array
+            char[] chars = input.ToCharArray();
+
+            // Ensure the first character in the string is a letter or undersore
+            if (Char.IsLetter(chars[0]) || chars[0] == '_')
+            {
+                // Ensure the last character is either a letter, number, or an underscore
+                if (Char.IsLetter(chars[chars.Length - 1]) || Char.IsDigit(chars[chars.Length - 1])
+                    || chars[chars.Length - 1] == '_')
+                {
+                    // First and last chars are valid, check validity of all chars
+                    for(int i = 1; i < chars.Length - 2; i++)
+                    {
+                        // Check if each character is NOT a letter, digit, or underscore
+                        if (!(Char.IsLetter(chars[i]) || Char.IsDigit(chars[i]) || chars[i] == '_'))
+                        {
+                            return false;
+                        }
+                    }
+
+                } // Last char wasnt valid
+                else return false;
+
+            } // First char wasn't valid
+            else return false; 
+               
+            return false;
+        }
+
+        /// <summary>
+        /// Checks if the input string is one of our accepted 
+        /// operators; +, -, /, *. This also includes parands; (, ).
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns></returns>
+        private static bool isOperator(String input)
+        {
+            if(input == "+" || input == "-" || input == "/" || input == "*")
+                return true;
+            return false;
+        }
+
+        /// <summary>
+        /// Checks if the input string is one of our accepted 
+        /// operators; +, -, /, *. This also includes parands; (, ).
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns></returns>
+        private static bool isParand(String input)
+        {
+            if (input == "(" || input == ")")
+                return true;
+            return false;
+        }
     }
+}
 
     /// <summary>
     /// Used to report syntactic errors in the argument to the Formula constructor.
@@ -272,4 +448,5 @@ namespace SpreadsheetUtilities
         /// </summary>
         public string Reason { get; private set; }
     }
-}
+
+
