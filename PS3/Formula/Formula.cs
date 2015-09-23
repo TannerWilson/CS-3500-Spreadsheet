@@ -121,7 +121,7 @@ namespace SpreadsheetUtilities
             string[] tokens = GetTokens(formulaString).ToArray<string>();
             foreach(String s in tokens)
             {
-                if (isVarible(s))
+                if (isVariable(s))
                     result.Add(s);
             }
             return result;
@@ -282,31 +282,30 @@ namespace SpreadsheetUtilities
             // Sperarate the tokens in the string
             String[] tokens = GetTokens(input).ToArray<String>();
 
-            // Tokens must have at leatst one token
+            // Tokens must have at least one token
             if (tokens.Length < 1)
                 throw new FormulaFormatException("Formula cannot be empty");
 
-            // First token must be a double, varible or a '('
-            if (!Double.TryParse(tokens[0], out value) || !isVarible(tokens[0]) || !(tokens[0] == "("))
+            // First token must be a double, variable or a '('
+            if (!isVariable(tokens[0]) && tokens[0] != "(" && !Double.TryParse(tokens[0], out value))
                 throw new FormulaFormatException("Invalad first token");
 
-            // Last token must be a double, varible or a ')'
-            if (!Double.TryParse(tokens[tokens.Length-1], out value) || !isVarible(tokens[tokens.Length - 1])
-                || !(tokens[tokens.Length - 1] == ")"))
+            // Last token must be a double, variable or a ')'
+            if (!isVariable(tokens[tokens.Length - 1]) && !(tokens[tokens.Length - 1] == ")") 
+                && !Double.TryParse(tokens[tokens.Length - 1], out value))
                 throw new FormulaFormatException("Invalad last token");
 
             // Iterate over each token to ensure validity
-            for (int i = 1; i < tokens.Length - 1; i++)
+            for (int i = 0; i < tokens.Length; i++)
             {
                 // Check if the token is an accepted string
-                if (isOperator(tokens[i]) || isVarible(tokens[i])
+                if (isOperator(tokens[i]) || isVariable(tokens[i])
                     || Double.TryParse(tokens[i], out value) || isParand(tokens[i]))
                 {
                     // Token is acceptable, check each syntatic rule
+
                     if (tokens[i] == "(")
-                    {
                         openParands++;
-                    }
 
                     // Right Parentheses Rule
                     if (tokens[i] == ")")
@@ -323,18 +322,18 @@ namespace SpreadsheetUtilities
                          Token following an opening parenthesis oroperator 
                          must be either a number, a variable, or an opening parenthesis.
                         */
-                        if (!(isVarible(tokens[i=1]) || Double.TryParse(tokens[i+1], out value) || tokens[i+1] == "("))
+                        if (i+1 < tokens.Length && (!isVariable(tokens[i+1]) && !Double.TryParse(tokens[i+1], out value) && tokens[i+1] != "("))
                             throw new FormulaFormatException("Invalid token folowing an open parand or operator");
                     }
 
                     // Extra Following Rule
-                    if (isVarible(tokens[i]) || Double.TryParse(tokens[i], out value) || tokens[i] == ")")
+                    if (isVariable(tokens[i]) || Double.TryParse(tokens[i], out value) || tokens[i] == ")")
                     {
                         /*
                         Token following a number, a variable, or a closing parenthesis
                         must be either an operator or a closing parenthesis.
                         */
-                        if(!(isOperator(tokens[i+1]) || tokens[i+1] == ")"))
+                        if(i+1 < tokens.Length && (!isOperator(tokens[i+1]) && tokens[i+1] != ")"))
                             throw new FormulaFormatException("Invalid token folowing a number, variable, or closing parenthesis");
                     }
 
@@ -345,7 +344,7 @@ namespace SpreadsheetUtilities
                 } // token is not an accepted operator or varible name
                 else return false;
             }
-            return false;
+            return true;
         }
 
         /// <summary>
@@ -355,7 +354,7 @@ namespace SpreadsheetUtilities
         /// </summary>
         /// <param name="input"></param>
         /// <returns></returns>
-        private static bool isVarible(string input)
+        private static bool isVariable(string input)
         {
             // Convert the string into a character array
             char[] chars = input.ToCharArray();
@@ -368,7 +367,7 @@ namespace SpreadsheetUtilities
                     || chars[chars.Length - 1] == '_')
                 {
                     // First and last chars are valid, check validity of all chars
-                    for(int i = 1; i < chars.Length - 2; i++)
+                    for(int i = 1; i < chars.Length - 1; i++)
                     {
                         // Check if each character is NOT a letter, digit, or underscore
                         if (!(Char.IsLetter(chars[i]) || Char.IsDigit(chars[i]) || chars[i] == '_'))
@@ -383,7 +382,7 @@ namespace SpreadsheetUtilities
             } // First char wasn't valid
             else return false; 
                
-            return false;
+            return true;
         }
 
         /// <summary>
