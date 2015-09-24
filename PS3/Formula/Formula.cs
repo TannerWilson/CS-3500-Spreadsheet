@@ -140,6 +140,7 @@ namespace SpreadsheetUtilities
         public override string ToString()
         {
             String result = formulaString.Trim();
+            result = Regex.Replace(result, @"\s+", "");
             return result;
         }
 
