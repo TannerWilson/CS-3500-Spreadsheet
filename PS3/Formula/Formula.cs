@@ -101,6 +101,205 @@ namespace SpreadsheetUtilities
         /// </summary>
         public object Evaluate(Func<string, double> lookup)
         {
+            // Array of individual character strings of the formula  
+            string[] substrings = GetTokens(formulaString).ToArray<String>();
+
+            //string[] substrings = Regex.Split(formulaString, "(\\()|(\\))|(-)|(\\+)|(\\*)|(/)");
+
+            // Two stacks used to evaluate the expression
+            Stack<Double> values = new Stack<Double>();
+            Stack<String> operators = new Stack<String>();
+
+            for (int i = 0; i < substrings.Length; i++)
+            {
+                String t = substrings[i];
+                // Ensure t is not whitespace
+                if (t == " " || t == "")
+                    continue;
+
+                int value1; // Used to store parsed int value and the final pushed result
+                if (Int32.TryParse(t, out value1)) // t is an integer
+                {
+                    // If expression stack is empty, push t
+                    if (operators.Count == 0 || values.Count == 0)
+                        values.Push(value1);
+
+                    // If operator is * or /, pop and evaluate accordingly and push back to values stack
+                    else if (operators.Peek() == "*" || operators.Peek() == "/")
+                    {
+                        String expression = operators.Pop();
+                        Double value2 = values.Pop();
+                        // Evaluate and push
+                        performOperation(expression, value1, value2, values);
+                    }
+                    else
+                        values.Push(value1);
+                }
+
+                else // String is not interger, check possible strings
+                {
+                    if (t == "+" || t == "-") // t is either a + or -
+                    {
+                        if (operators.Count != 0) // Operators stack is empty, just push
+                        {
+                            // Check if the top operation in the operators stack is a + or -
+                            String topOp = operators.Peek();
+                            if (topOp == "+" || topOp == "-")
+                            {
+                                // Ensure enough values are in the values stack
+                                if (values.Count < 2)
+                                    return new FormulaError("Not enough values in stack to perform operation");
+
+                                // Pop top two values and top operator
+                                Double val1, val2;
+                                val1 = values.Pop();
+                                val2 = values.Pop();
+                                String operation = operators.Pop();
+
+                                // Evaluate using given operator
+                                performOperation(operation, val1, val2, values);
+                            }
+                        }
+
+                        // Push t onto operators
+                        operators.Push(t);
+                    }
+
+                    else if (t == "*" || t == "/") // t is either a * or /
+                        operators.Push(t);
+
+                    else if (t == "(") // t is a ( 
+                        operators.Push(t);
+
+                    else if (t == ")") // t is a )
+                    {
+                        String top = operators.Peek();
+                        // Evaluate addition and subtraction
+                        if (top == "+" || top == "-")
+                        {
+                            // Ensure enough values are in the values stack
+                            if (values.Count < 2)
+                                return new FormulaError("Not enough values in stack to perform operation");
+
+                            // Pop top two values and top operator
+                            Double val1, val2;
+                            val1 = values.Pop();
+                            val2 = values.Pop();
+                            String operation = operators.Pop();
+                            // Evaluate using given operator
+                            performOperation(operation, val1, val2, values);
+                        }
+
+                        // Pop next operator to ensure it is a (, if not throw exception
+                        String leftParand = "";
+                        try
+                        {
+                            leftParand = operators.Pop();
+                        }catch (InvalidOperationException)
+                        {
+                            // Trow exception if no values are in the stack when we pop.
+                            return new FormulaError("Too few operators");
+                        }
+
+                        if (leftParand != "(")
+                            return new FormulaError("Left parand was expected, but not found");
+
+                        // Evaluate mutiplicaton and division
+                        if (top == "*" || top == "/")
+                        {
+                            // Ensure enough values are in the values stack
+                            if (values.Count < 2)
+                                return new FormulaError("Not enough values in stack to perform operation");
+
+                            // Pop top two values and top operator
+                            Double val1, val2;
+                            val1 = values.Pop();
+                            val2 = values.Pop();
+                            String operation = operators.Pop();
+                            // Evaluate using given operator
+                            performOperation(operation, val1, val2, values);
+                        }
+                    }
+                    else // Operation possiblities are exhausted, so must be a varible
+                    {
+                        Double valribleValue;
+                        // Look up value of varible
+
+                        valribleValue =  lookup(t);
+
+                        // If operator stack is empty, push t
+                        if (operators.Count == 0 || values.Count == 0)
+                            values.Push(valribleValue);
+
+                        // If operator is * or /, pop and evaluate accordingly and push back to values stack
+                        else if (operators.Peek() == "*" || operators.Peek() == "/")
+                        {
+                            String expression = operators.Pop();
+                            Double value2 = values.Pop();
+                            // Evaluate and push
+                            performOperation(expression, valribleValue, value2, values);
+                        }
+                        else
+                            values.Push(valribleValue);
+                    }
+
+                }
+            }
+            // Array of strings is exhausted
+            if (operators.Count == 0) // No more operations
+            {
+                if (values.Count > 1)
+                    return new FormulaError("More than one finishing value");
+
+                return values.Pop();
+            }
+            else // Still one + or - left to evaluate
+            {
+                // Not excatly one operator or two values
+                if (values.Count != 2)
+                    return new FormulaError("More than two finishing value");
+
+                if (operators.Count > 1)
+                    return new FormulaError("More than one finishing operator");
+
+                // Pop top two values and top operator
+                Double val1, val2;
+                val1 = values.Pop();
+                val2 = values.Pop();
+                String operation = operators.Pop();
+                // Evaluate using given operator
+                performOperation(operation, val1, val2, values);
+                // Return final value
+                return values.Pop();
+            }
+        }
+
+        private object performOperation(string operation, Double value1, Double value2, Stack<Double> values)
+        {
+            Double result = 0;
+
+            if (operation == "*")
+            {
+                result = value1 * value2;
+                values.Push(result);
+            }
+            else if (operation == "/")
+            {
+                // Ensures no dividing by zero
+                if (value1 == 0) return new FormulaError("Divided by zero");
+                result = value2 / value1;
+                values.Push(result);
+            }
+            else if (operation == "+")
+            {
+                result = value1 + value2;
+                values.Push(result);
+            }
+            else if (operation == "-")
+            {
+                result = value2 - value1;
+                values.Push(result);
+            }
             return null;
         }
 
@@ -163,14 +362,17 @@ namespace SpreadsheetUtilities
         public override bool Equals(object obj)
         {
             // Preliminary null checks
-            if (this == null && obj == null)
-                return true;
-            if (this == null && obj != null)
+            if (obj == null || !(obj is Formula))
                 return false;
+
+            // Generate a string from the input formula
+            Formula input = (Formula)obj;
+            String form2 = input.ToString();
 
             // Generate arrays of the tokens of each formula expression
             string[] formula1 = GetTokens(formulaString).ToArray<string>();
-            string[] formula2 = GetTokens((String) obj).ToArray<string>();
+            
+            string[] formula2 = GetTokens(form2).ToArray<string>();
 
             // If the two are equal the arrays should be the same size
             if (formula1.Length != formula2.Length)
@@ -195,12 +397,6 @@ namespace SpreadsheetUtilities
         /// </summary>
         public static bool operator ==(Formula f1, Formula f2)
         {
-            // Preliminary null checks
-            if (f1 == null & f2 == null)
-                return true;
-            if (f1 == null & f2 != null)
-                return false;
-
             // Use defined equals method
             return f1.Equals(f2);
         }
@@ -212,12 +408,6 @@ namespace SpreadsheetUtilities
         /// </summary>
         public static bool operator !=(Formula f1, Formula f2)
         {
-            // Preliminary null checks
-            if (f1 == null & f2 == null)
-                return false;
-            if (f1 == null & f2 != null)
-                return true;
-
             // Use defined equals method
             return f1.Equals(f2);
         }
@@ -229,8 +419,24 @@ namespace SpreadsheetUtilities
         /// </summary>
         public override int GetHashCode()
         {
-            // Use string's default hash code
-            return formulaString.GetHashCode();
+            // Array of individual character strings of the formula  
+            string[] substrings = GetTokens(formulaString).ToArray<String>();
+            int hash = 0;
+            Double dub = 0;
+
+            // Iterate over each token in the string
+            foreach(String s in substrings)
+            {
+                // If is a double, strip ending 0's and add to hash
+                if(Double.TryParse(s, out dub))
+                {
+                    String num = dub.ToString();
+                    hash += num.GetHashCode();
+                }
+                else // Just use strings given hash code to add to total
+                    hash += s.GetHashCode();
+            }
+            return hash;
         }
 
         /// <summary>
@@ -338,13 +544,15 @@ namespace SpreadsheetUtilities
                             throw new FormulaFormatException("Invalid token folowing a number, variable, or closing parenthesis");
                     }
 
-                    // Ensure the number of parenthesis are equal
-                    if (openParands != closeParands)
-                        throw new FormulaFormatException("Unbalanced parands");
-
                 } // token is not an accepted operator or varible name
+
                 else return false;
             }
+
+            // Ensure the number of parenthesis are equal
+            if (openParands != closeParands)
+                throw new FormulaFormatException("Unbalanced parands");
+
             return true;
         }
 
