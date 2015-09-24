@@ -130,7 +130,14 @@ namespace SpreadsheetUtilities
                         String expression = operators.Pop();
                         Double value2 = values.Pop();
                         // Evaluate and push
-                        performOperation(expression, value1, value2, values);
+                        try
+                        {   // Surrounded by try to catch division by 0
+                            performOperation(expression, value1, value2, values);
+                        }
+                        catch(FormulaFormatException e)
+                        {
+                            return new FormulaError(e.Message);
+                        }
                     }
                     else
                         values.Push(value1);
@@ -193,7 +200,7 @@ namespace SpreadsheetUtilities
                         // Pop next operator to ensure it is a (, if not throw exception
                         String leftParand = "";
                         try
-                        {
+                        { // Ensure operators is not empty
                             leftParand = operators.Pop();
                         }catch (InvalidOperationException)
                         {
@@ -217,19 +224,32 @@ namespace SpreadsheetUtilities
                             val2 = values.Pop();
                             String operation = operators.Pop();
                             // Evaluate using given operator
-                            performOperation(operation, val1, val2, values);
+                            try
+                            { // Ensure no division by 0
+                                performOperation(operation, val1, val2, values);
+                            }
+                            catch (FormulaFormatException e)
+                            {
+                                return new FormulaError(e.Message);
+                            }
                         }
                     }
                     else // Operation possiblities are exhausted, so must be a varible
                     {
-                        Double valribleValue;
+                        Double variableValue = 1;
                         // Look up value of varible
-
-                        valribleValue =  lookup(t);
+                        try
+                        {
+                            variableValue = lookup(t);
+                        }
+                        catch(Exception)
+                        {
+                            return new FormulaError("Invalid variable. Variable value was not found.");
+                        }
 
                         // If operator stack is empty, push t
                         if (operators.Count == 0 || values.Count == 0)
-                            values.Push(valribleValue);
+                            values.Push(variableValue);
 
                         // If operator is * or /, pop and evaluate accordingly and push back to values stack
                         else if (operators.Peek() == "*" || operators.Peek() == "/")
@@ -237,10 +257,17 @@ namespace SpreadsheetUtilities
                             String expression = operators.Pop();
                             Double value2 = values.Pop();
                             // Evaluate and push
-                            performOperation(expression, valribleValue, value2, values);
+                            try
+                            { // Ensure no division by 0
+                                performOperation(expression, variableValue, value2, values);
+                            }
+                            catch (FormulaFormatException e)
+                            {
+                                return new FormulaError(e.Message);
+                            }
                         }
                         else
-                            values.Push(valribleValue);
+                            values.Push(variableValue);
                     }
 
                 }
@@ -268,13 +295,20 @@ namespace SpreadsheetUtilities
                 val2 = values.Pop();
                 String operation = operators.Pop();
                 // Evaluate using given operator
-                performOperation(operation, val1, val2, values);
+                try
+                { // Ensure no division by 0
+                    performOperation(operation, val1, val2, values);
+                }
+                catch (FormulaFormatException e)
+                {
+                    return new FormulaError(e.Message);
+                }
                 // Return final value
                 return values.Pop();
             }
         }
 
-        private object performOperation(string operation, Double value1, Double value2, Stack<Double> values)
+        private void performOperation(string operation, Double value1, Double value2, Stack<Double> values)
         {
             Double result = 0;
 
@@ -286,7 +320,7 @@ namespace SpreadsheetUtilities
             else if (operation == "/")
             {
                 // Ensures no dividing by zero
-                if (value1 == 0) return new FormulaError("Divided by zero");
+                if (value1 == 0) throw new FormulaFormatException("Divided by zero");
                 result = value2 / value1;
                 values.Push(result);
             }
@@ -300,7 +334,6 @@ namespace SpreadsheetUtilities
                 result = value2 - value1;
                 values.Push(result);
             }
-            return null;
         }
 
         /// <summary>
@@ -398,6 +431,44 @@ namespace SpreadsheetUtilities
         public static bool operator ==(Formula f1, Formula f2)
         {
             // Use defined equals method
+            bool f1Null = false;
+            bool f2Null = false;
+            /* 
+            Try catches used to check if the objects are null. If we try
+            to access a null objet then that will thro an null refrence exception
+            so if that is thrown, we know that the object is null, so we set that
+            boolean to true and proceed.
+            */
+            try
+            {
+                if(f1 != null)
+                {
+                    f1Null = false;
+                }
+            }
+            catch (NullReferenceException)
+            {
+                f1Null = true;
+            }
+            try
+            {
+                if (f2 != null)
+                {
+                    f2Null = false;
+                }
+            }
+            catch (NullReferenceException)
+            {
+                f2Null = true;
+            }
+            // Checking null booleans
+            if (f1Null == true && f2Null == true)
+                return true;
+            if (f1Null == true && f2Null == false)
+                return false;
+            if (f1Null == false && f2Null == true)
+                return false;
+
             return f1.Equals(f2);
         }
 
@@ -408,6 +479,44 @@ namespace SpreadsheetUtilities
         /// </summary>
         public static bool operator !=(Formula f1, Formula f2)
         {
+            bool f1Null = false;
+            bool f2Null = false;
+            /* 
+            Try catches used to check if the objects are null. If we try
+            to access a null objet then that will thro an null refrence exception
+            so if that is thrown, we know that the object is null, so we set that
+            boolean to true and proceed.
+            */
+            try
+            {
+                if (f1 != null)
+                {
+                    f1Null = false;
+                }
+            }
+            catch (NullReferenceException)
+            {
+                f1Null = true;
+            }
+            try
+            {
+                if (f2 != null)
+                {
+                    f2Null = false;
+                }
+            }
+            catch (NullReferenceException)
+            {
+                f2Null = true;
+            }
+            // Checking null booleans
+            if (f1Null == true && f2Null == true)
+                return false;
+            if (f1Null == true && f2Null == false)
+                return true;
+            if (f1Null == false && f2Null == true)
+                return true;
+
             // Use defined equals method
             return f1.Equals(f2);
         }

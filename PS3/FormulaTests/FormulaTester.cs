@@ -158,13 +158,17 @@ namespace SpreadsheetUtilities.Tests
         [TestMethod()]
         public void Public_EvaluateTest8()
         {
-            Assert.Fail();
+            Formula test = new Formula("((x + 5) * 10 + Y)/ 0");
+            object result = test.Evaluate(s => 5);
+            Assert.IsTrue(result is FormulaError);
         }
 
         [TestMethod()]
         public void Public_EvaluateTest9()
         {
-            Assert.Fail();
+            Formula test = new Formula("((x + 5) * 10 + Y)/ x");
+            object result = test.Evaluate(s => 0);
+            Assert.IsTrue(result is FormulaError);
         }
 
         [TestMethod()]
@@ -237,6 +241,14 @@ namespace SpreadsheetUtilities.Tests
 
             Assert.IsFalse(test1.Equals(test4));
             Assert.IsFalse(test3.Equals(test4));
+
+            // Using extended operators
+            Assert.IsTrue(test1 == test2);
+            Assert.IsTrue(test1 == test3);
+            Assert.IsTrue(test2 == test3);
+
+            Assert.IsTrue(test1 != test4);
+            Assert.IsTrue(test3 != test4);
         }
 
         [TestMethod()]
@@ -259,6 +271,16 @@ namespace SpreadsheetUtilities.Tests
             Assert.IsFalse(test1.GetHashCode() == test5.GetHashCode());
             Assert.IsFalse(test1.GetHashCode() == test6.GetHashCode());
         }
+
+        //[TestMethod()]
+        //public void Private_isVariableTest()
+        //{
+        //    Formula test = new Formula("1+1");
+        //    PrivateObject FormAccessor = new PrivateObject(test);
+
+        //    Assert.AreEqual(true, FormAccessor.Invoke("isVariable", new String[1] { "x1" }));
+        //}
+
 
         /// <summary>
         /// Used as a normalizer function to test the second constructor
