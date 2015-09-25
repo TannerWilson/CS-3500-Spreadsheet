@@ -116,6 +116,14 @@ namespace SpreadsheetUtilities.Tests
         }
 
         [TestMethod()]
+        public void Public_EvaluateTest2_()
+        {
+            Formula test = new Formula("2*(3*5)");
+            Double result = (Double)test.Evaluate(s => 0);
+            Assert.IsTrue(result == 30);
+        }
+
+        [TestMethod()]
         public void Public_EvaluateTest3()
         {
             Formula test = new Formula("2+(3+5*5)");
@@ -242,7 +250,7 @@ namespace SpreadsheetUtilities.Tests
             Assert.IsFalse(test1.Equals(test4));
             Assert.IsFalse(test3.Equals(test4));
 
-            // Using extended operators
+            //// Using extended operators
             Assert.IsTrue(test1 == test2);
             Assert.IsTrue(test1 == test3);
             Assert.IsTrue(test2 == test3);

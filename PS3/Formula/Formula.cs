@@ -117,8 +117,8 @@ namespace SpreadsheetUtilities
                 if (t == " " || t == "")
                     continue;
 
-                int value1; // Used to store parsed int value and the final pushed result
-                if (Int32.TryParse(t, out value1)) // t is an integer
+                Double value1; // Used to store parsed int value and the final pushed result
+                if (Double.TryParse(t, out value1)) // t is an integer
                 {
                     // If expression stack is empty, push t
                     if (operators.Count == 0 || values.Count == 0)
@@ -153,10 +153,6 @@ namespace SpreadsheetUtilities
                             String topOp = operators.Peek();
                             if (topOp == "+" || topOp == "-")
                             {
-                                // Ensure enough values are in the values stack
-                                if (values.Count < 2)
-                                    return new FormulaError("Not enough values in stack to perform operation");
-
                                 // Pop top two values and top operator
                                 Double val1, val2;
                                 val1 = values.Pop();
@@ -184,10 +180,6 @@ namespace SpreadsheetUtilities
                         // Evaluate addition and subtraction
                         if (top == "+" || top == "-")
                         {
-                            // Ensure enough values are in the values stack
-                            if (values.Count < 2)
-                                return new FormulaError("Not enough values in stack to perform operation");
-
                             // Pop top two values and top operator
                             Double val1, val2;
                             val1 = values.Pop();
@@ -214,10 +206,6 @@ namespace SpreadsheetUtilities
                         // Evaluate mutiplicaton and division
                         if (top == "*" || top == "/")
                         {
-                            // Ensure enough values are in the values stack
-                            if (values.Count < 2)
-                                return new FormulaError("Not enough values in stack to perform operation");
-
                             // Pop top two values and top operator
                             Double val1, val2;
                             val1 = values.Pop();
@@ -275,20 +263,10 @@ namespace SpreadsheetUtilities
             // Array of strings is exhausted
             if (operators.Count == 0) // No more operations
             {
-                if (values.Count > 1)
-                    return new FormulaError("More than one finishing value");
-
                 return values.Pop();
             }
             else // Still one + or - left to evaluate
             {
-                // Not excatly one operator or two values
-                if (values.Count != 2)
-                    return new FormulaError("More than two finishing value");
-
-                if (operators.Count > 1)
-                    return new FormulaError("More than one finishing operator");
-
                 // Pop top two values and top operator
                 Double val1, val2;
                 val1 = values.Pop();
@@ -439,35 +417,35 @@ namespace SpreadsheetUtilities
             so if that is thrown, we know that the object is null, so we set that
             boolean to true and proceed.
             */
-            try
-            {
-                if(f1 != null)
-                {
-                    f1Null = false;
-                }
-            }
-            catch (NullReferenceException)
-            {
-                f1Null = true;
-            }
-            try
-            {
-                if (f2 != null)
-                {
-                    f2Null = false;
-                }
-            }
-            catch (NullReferenceException)
-            {
-                f2Null = true;
-            }
-            // Checking null booleans
-            if (f1Null == true && f2Null == true)
-                return true;
-            if (f1Null == true && f2Null == false)
-                return false;
-            if (f1Null == false && f2Null == true)
-                return false;
+            //try
+            //{
+            //    if(f1 != null)
+            //    {
+            //        f1Null = false;
+            //    }
+            //}
+            //catch (NullReferenceException)
+            //{
+            //    f1Null = true;
+            //}
+            //try
+            //{
+            //    if (f2 != null)
+            //    {
+            //        f2Null = false;
+            //    }
+            //}
+            //catch (NullReferenceException)
+            //{
+            //    f2Null = true;
+            //}
+            //// Checking null booleans
+            //if (f1Null == true && f2Null == true)
+            //    return true;
+            //if (f1Null == true && f2Null == false)
+            //    return false;
+            //if (f1Null == false && f2Null == true)
+            //    return false;
 
             return f1.Equals(f2);
         }
@@ -487,38 +465,38 @@ namespace SpreadsheetUtilities
             so if that is thrown, we know that the object is null, so we set that
             boolean to true and proceed.
             */
-            try
-            {
-                if (f1 != null)
-                {
-                    f1Null = false;
-                }
-            }
-            catch (NullReferenceException)
-            {
-                f1Null = true;
-            }
-            try
-            {
-                if (f2 != null)
-                {
-                    f2Null = false;
-                }
-            }
-            catch (NullReferenceException)
-            {
-                f2Null = true;
-            }
-            // Checking null booleans
-            if (f1Null == true && f2Null == true)
-                return false;
-            if (f1Null == true && f2Null == false)
-                return true;
-            if (f1Null == false && f2Null == true)
-                return true;
+            //try
+            //{
+            //    if (f1 != null)
+            //    {
+            //        f1Null = false;
+            //    }
+            //}
+            //catch (NullReferenceException)
+            //{
+            //    f1Null = true;
+            //}
+            //try
+            //{
+            //    if (f2 != null)
+            //    {
+            //        f2Null = false;
+            //    }
+            //}
+            //catch (NullReferenceException)
+            //{
+            //    f2Null = true;
+            //}
+            //// Checking null booleans
+            //if (f1Null == true && f2Null == true)
+            //    return false;
+            //if (f1Null == true && f2Null == false)
+            //    return true;
+            //if (f1Null == false && f2Null == true)
+            //    return true;
 
             // Use defined equals method
-            return f1.Equals(f2);
+            return !f1.Equals(f2);
         }
 
         /// <summary>
