@@ -32,10 +32,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Formula">
-      <HintPath>..\..\PS3\Formula\bin\Debug\Formula.dll</HintPath>
+      <HintPath>..\Resources\Libraries\Formula.dll</HintPath>
     </Reference>
     <Reference Include="SpreadsheetUtilities">
-      <HintPath>..\..\PS2\SpreadsheetUtilities\bin\Debug\SpreadsheetUtilities.dll</HintPath>
+      <HintPath>..\Resources\Libraries\SpreadsheetUtilities.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

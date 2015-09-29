@@ -37,11 +37,11 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Libraries\Formula.dll" />
+    <Content Include="Libraries\Formula.XML" />
+    <Content Include="Libraries\SpreadsheetUtilities.dll" />
+    <Content Include="Libraries\SpreadsheetUtilities.XML" />
     <Content Include="README.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="Libraries\DependencyGraph.cs" />
-    <Compile Include="Libraries\Formula.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

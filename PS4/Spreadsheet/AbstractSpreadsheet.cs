@@ -202,18 +202,25 @@ namespace SS
         /// </summary>
         private void Visit(String start, String name, ISet<String> visited, LinkedList<String> changed)
         {
+            // Add this cell to visited
             visited.Add(name);
+
+            // Iterate through each dependent of this cell
             foreach (String n in GetDirectDependents(name))
             {
+                // if the cell name is contained in its dependents
                 if (n.Equals(start))
                 {
-                    throw new CircularException();
+                    throw new CircularException(); // A cell depends on itself
                 }
+                // If we have not visited the dependent cell yet
                 else if (!visited.Contains(n))
                 {
+                    // Recurse into the selected cell
                     Visit(start, n, visited, changed);
                 }
             }
+            // Add current cell into changed
             changed.AddFirst(name);
         }
 
