@@ -63,6 +63,7 @@ namespace SS
         public Spreadsheet()
         {
             cells = new Dictionary<string, cell>();
+            dependencies = new DependencyGraph();
         }
 
         /// <summary>
@@ -82,7 +83,7 @@ namespace SS
                 // return value's contents
                 return value.getContents();
             }
-            else return null;
+            else return "";
 
         }
 
@@ -91,13 +92,17 @@ namespace SS
         /// </summary>
         public override IEnumerable<string> GetNamesOfAllNonemptyCells()
         {
-           /*
-              If a cell was added to the dictionary "cells" then the cell value must be 
-              non-empty. So simply return the names of every added cell, or the keys of the 
-              "cells" dictionary.
-           */
-
-            return cells.Keys;
+            /*
+               If a cell was added to the dictionary "cells" then the cell value must be 
+               non-empty. So simply return the names of every added cell, or the keys of the 
+               "cells" dictionary.
+            */
+            LinkedList<string> result = new LinkedList<string>();
+            foreach (String key in cells.Keys)
+            {
+                result.AddLast(key);
+            }
+            return result;
         }
 
         /// <summary>
@@ -125,10 +130,36 @@ namespace SS
             if (name == null || !isName(name))
                 throw new InvalidNameException();
 
+            // Check if name is in the changed cells
             cell outVal;
-            if(cells.TryGetValue(name, out outVal))
+            if (cells.TryGetValue(name, out outVal))
             {
+                outVal.setContents(formula);
 
+                LinkedList<string> reCalc = (LinkedList<string>)GetCellsToRecalculate(name);
+                HashSet<string> result = new HashSet<string>();
+
+                foreach (string s in reCalc)
+                    result.Add(s);
+                return result;
+            }
+            else // No cell named "name" was found
+            {
+                // Add cell to changed cells
+                cell adding = new cell(name, formula, null);
+
+                // Add name to dependencies and add its varibles as dependents
+                dependencies.AddDependency(name, " ");
+                LinkedList<String> vars = (LinkedList<String>) formula.GetVariables();
+                dependencies.ReplaceDependents(name, vars);
+
+                // Return new dependents
+                LinkedList<string> reCalc = (LinkedList<string>)GetCellsToRecalculate(name);
+                HashSet<string> result = new HashSet<string>();
+
+                foreach (string s in reCalc)
+                    result.Add(s);
+                return result;
             }
 
 
@@ -155,6 +186,27 @@ namespace SS
             // Valid name check
             if (name == null || !isName(name))
                 throw new InvalidNameException();
+
+            // Check if name is in the changed cells
+            cell outVal;
+            if (cells.TryGetValue(name, out outVal))
+            {
+                outVal.setContents(text);
+                return new HashSet<String>();
+            }
+            else // No cell named "name"
+            {
+                // Add cell and return empty set
+                cell adding = new cell(name, text, text);
+                cells.Add(name, adding);
+
+                LinkedList<string> reCalc = (LinkedList<string>)GetCellsToRecalculate(name);
+                HashSet<string> result = new HashSet<string>();
+
+                foreach (string s in reCalc)
+                    result.Add(s);
+                return result;
+            }
         }
 
         /// <summary>
@@ -178,12 +230,20 @@ namespace SS
             if (cells.TryGetValue(name, out outVal))
             {
                 outVal.setContents(number);
-                return(ISet<String>) GetCellsToRecalculate(name);
+                return new HashSet<String>();
             }
             else // Cell is not in "cells"
             {
-                cell adding = new cell(null, number, number);
+                // add cell to changed cells and return empty set
+                cell adding = new cell(name, number, number);
                 cells.Add(name, adding);
+
+                // Return dependent cells
+                LinkedList<string> reCalc = (LinkedList<string>)GetCellsToRecalculate(name);
+                HashSet<string> result = new HashSet<string>();
+                foreach (string s in reCalc)
+                    result.Add(s);
+                return result;
             }
         }
 
@@ -206,7 +266,19 @@ namespace SS
         /// </summary>
         protected override IEnumerable<string> GetDirectDependents(string name)
         {
-            throw new NotImplementedException();
+            // Error checking
+            if (name == null)
+                throw new ArgumentNullException();
+            if (!isName(name))
+                throw new InvalidNameException();
+
+            // Ensure cell "name" is in dependencies
+            if (dependencies.HasDependents(name))
+            {
+                return dependencies.GetDependents(name);
+            }
+            // Not in dependencies, so has no dependents
+            else return new HashSet<string>();
         }
 
         /// <summary>
