@@ -147,10 +147,11 @@ namespace SS
             {
                 // Add cell to changed cells
                 cell adding = new cell(name, formula, null);
+                cells.Add(name, adding);
 
                 // Add name to dependencies and add its varibles as dependents
                 dependencies.AddDependency(name, " ");
-                LinkedList<String> vars = (LinkedList<String>) formula.GetVariables();
+                HashSet<String> vars = (HashSet<String>) formula.GetVariables();
                 dependencies.ReplaceDependents(name, vars);
 
                 // Return new dependents
@@ -192,7 +193,14 @@ namespace SS
             if (cells.TryGetValue(name, out outVal))
             {
                 outVal.setContents(text);
-                return new HashSet<String>();
+
+                // Return cells to Recalculate
+                LinkedList<string> reCalc = (LinkedList<string>)GetCellsToRecalculate(name);
+                HashSet<string> result = new HashSet<string>();
+
+                foreach (string s in reCalc)
+                    result.Add(s);
+                return result;
             }
             else // No cell named "name"
             {
@@ -200,6 +208,7 @@ namespace SS
                 cell adding = new cell(name, text, text);
                 cells.Add(name, adding);
 
+                // Return cells to Recalculate
                 LinkedList<string> reCalc = (LinkedList<string>)GetCellsToRecalculate(name);
                 HashSet<string> result = new HashSet<string>();
 
@@ -230,7 +239,14 @@ namespace SS
             if (cells.TryGetValue(name, out outVal))
             {
                 outVal.setContents(number);
-                return new HashSet<String>();
+
+                // Return cells to Recalculate
+                LinkedList<string> reCalc = (LinkedList<string>)GetCellsToRecalculate(name);
+                HashSet<string> result = new HashSet<string>();
+
+                foreach (string s in reCalc)
+                    result.Add(s);
+                return result;
             }
             else // Cell is not in "cells"
             {
@@ -331,29 +347,6 @@ namespace SS
             // The contents and value of a cell
             private Object contents;
             private Object value;
-
-            /// <summary>
-            /// Constructor to create a new empty cell 
-            /// </summary>
-            public cell()
-            {
-                name = null;
-                contents = null;
-                value = null;
-            }
-
-            /// <summary>
-            /// Constructor to create a new empty cell with a givin input name
-            /// </summary>
-            /// <param name="Name"></param>
-            public cell (String Name)
-            {
-                if (!isName(Name))
-                    throw new InvalidNameException();
-                name = Name;
-                contents = null;
-                value = null;
-            }
 
             /// <summary>
             /// A constructor that sets the name, contents and value of the cell.
