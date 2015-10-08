@@ -12,3 +12,11 @@ Implementation:
 	This Spreadsheet solution brings all these classes together to begin a working Spreadsheet application.
 	
 	README update: 9/28/2015  
+
+
+	Update: 10/8/2015
+		Updated to PS5 specs. 
+		Started implimentation.
+		Changed isName function to accomodate the new restrictions on names.
+		Added member varibles and XML comments for each.
+		Started on driver for "SetCellContents"

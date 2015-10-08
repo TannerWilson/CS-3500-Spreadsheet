@@ -13,11 +13,29 @@ namespace SS
     /// </summary>
     public class Spreadsheet : AbstractSpreadsheet
     {
-        // Used to store all cells in the spreadsheet
+        /// <variable>
+        /// Used to store all cells in the spreadsheet
+        /// </variable>
         private Dictionary<string, cell> cells;
-        // Used to store all the dependencies in the spreadsheet
+
+        /// <variable>
+        /// Used to store all the dependencies in the spreadsheet
+        /// </variable>
         private DependencyGraph dependencies;
 
+        /// <variable>
+        /// String that holds the path to save the file 
+        /// </variable>
+        string filePath;
+
+        /// <variable>
+        /// Used to report if the document was changed
+        /// </variable>
+        private Boolean changed;
+
+        /// <variable>
+        /// Used to tell if the document has been changed.
+        /// </variable>
         public override bool Changed
         {
             get
@@ -34,8 +52,9 @@ namespace SS
         /// <summary>
         /// Constructs an empty SpreadSheet object.
         /// </summary>
-        public Spreadsheet() : base(s => true s => s, "default")
+        public Spreadsheet() : base(s => true, s => s, "default")
         {
+
             cells = new Dictionary<string, cell>();
             dependencies = new DependencyGraph();
         }
@@ -100,13 +119,65 @@ namespace SS
 
         /// <summary>
         /// Implemented as documented in "AbstractSpreadsheet"
+        /// 
+        /// 
+        /// If content is null, throws an ArgumentNullException.
+        /// 
+        /// Otherwise, if name is null or invalid, throws an InvalidNameException.
+        /// 
+        /// Otherwise, if content parses as a double, the contents of the named
+        /// cell becomes that double.
+        /// 
+        /// Otherwise, if content begins with the character '=', an attempt is made
+        /// to parse the remainder of content into a Formula f using the Formula
+        /// constructor.  There are then three possibilities:
+        /// 
+        ///   (1) If the remainder of content cannot be parsed into a Formula, a 
+        ///       SpreadsheetUtilities.FormulaFormatException is thrown.
+        ///       
+        ///   (2) Otherwise, if changing the contents of the named cell to be f
+        ///       would cause a circular dependency, a CircularException is thrown.
+        ///       
+        ///   (3) Otherwise, the contents of the named cell becomes f.
+        /// 
+        /// Otherwise, the contents of the named cell becomes content.
+        /// 
+        /// If an exception is not thrown, the method returns a set consisting of
+        /// name plus the names of all other cells whose value depends, directly
+        /// or indirectly, on the named cell.
+        /// 
+        /// For example, if name is A1, B1 contains A1*2, and C1 contains B1+A1, the
+        /// set {A1, B1, C1} is returned.
         /// </summary>
         /// <param name="name"></param>
         /// <param name="content"></param>
         /// <returns></returns>
         public override ISet<string> SetContentsOfCell(string name, string content)
         {
-            throw new NotImplementedException();
+            // Error checking
+            if (content == null)
+                throw new ArgumentNullException("Content was null");
+            if (name == null || !isName(name) || !IsValid(name))
+                throw new InvalidNameException();
+
+            double value;
+            // Content is a double
+            if (Double.TryParse(content, out value))
+            {
+                return SetCellContents(name, value);
+            }
+
+            // Content is a formula
+            else if (content.ToCharArray()[0] == '=')
+            {
+
+            }
+            else // Content is a string
+                return SetCellContents(name, content);
+
+
+
+            return new HashSet<string>();
         }
 
         /// <summary>
@@ -271,18 +342,17 @@ namespace SS
             // Convert the string into a character array
             char[] chars = input.ToCharArray();
 
-            // Ensure the first character in the string is a letter or undersore
-            if (Char.IsLetter(chars[0]) || chars[0] == '_')
+            // Ensure the first character in the string is a letter 
+            if (Char.IsLetter(chars[0]))
             {
-                // Ensure the last character is either a letter, number, or an underscore
-                if (Char.IsLetter(chars[chars.Length - 1]) || Char.IsDigit(chars[chars.Length - 1])
-                    || chars[chars.Length - 1] == '_')
+                // Ensure the last character is a number
+                if (Char.IsDigit(chars[chars.Length - 1]))
                 {
                     // First and last chars are valid, check validity of all chars
                     for (int i = 1; i < chars.Length - 1; i++)
                     {
                         // Check if each character is NOT a letter, digit, or underscore
-                        if (!(Char.IsLetter(chars[i]) || Char.IsDigit(chars[i]) || chars[i] == '_'))
+                        if (!(Char.IsLetter(chars[i]) || Char.IsDigit(chars[i])))
                         {
                             return false;
                         }
