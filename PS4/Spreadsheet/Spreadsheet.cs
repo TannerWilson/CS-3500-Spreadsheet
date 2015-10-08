@@ -18,13 +18,45 @@ namespace SS
         // Used to store all the dependencies in the spreadsheet
         private DependencyGraph dependencies;
 
+        public override bool Changed
+        {
+            get
+            {
+                throw new NotImplementedException();
+            }
+
+            protected set
+            {
+                throw new NotImplementedException();
+            }
+        }
+
         /// <summary>
         /// Constructs an empty SpreadSheet object.
         /// </summary>
-        public Spreadsheet()
+        public Spreadsheet() : base(s => true s => s, "default")
         {
             cells = new Dictionary<string, cell>();
             dependencies = new DependencyGraph();
+        }
+
+        /// <summary>
+        /// Implemented as documented in "AbstractSpreadsheet"
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public override object GetCellValue(string name)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Implemented as documented in "AbstractSpreadsheet"
+        /// </summary>
+        /// <param name="filename"></param>
+        public override void Save(string filename)
+        {
+            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -67,9 +99,20 @@ namespace SS
         }
 
         /// <summary>
+        /// Implemented as documented in "AbstractSpreadsheet"
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="content"></param>
+        /// <returns></returns>
+        public override ISet<string> SetContentsOfCell(string name, string content)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
         /// Follows the description from the AbstractSpreadsheet parent class.
         /// </summary>
-        public override ISet<string> SetCellContents(string name, Formula formula)
+        protected override ISet<string> SetCellContents(string name, Formula formula)
         {
             // Formula null check
             if (formula == null)
@@ -118,7 +161,7 @@ namespace SS
         /// <summary>
         /// Follows the description from the AbstractSpreadsheet parent class.
         /// </summary>
-        public override ISet<string> SetCellContents(string name, string text)
+        protected override ISet<string> SetCellContents(string name, string text)
         {
             // Text null check
             if (text == null)
@@ -161,7 +204,7 @@ namespace SS
         /// <summary>
         /// Follows the description from the AbstractSpreadsheet parent class.
         /// </summary>
-        public override ISet<string> SetCellContents(string name, double number)
+        protected override ISet<string> SetCellContents(string name, double number)
         {
             // Valid name check
             if (name == null || !isName(name))
@@ -254,6 +297,17 @@ namespace SS
             return true;
         }
 
+        /// <summary>
+        /// Implemented as documented in "AbstractSpreadsheet"
+        /// </summary>
+        /// <param name="filename"></param>
+        /// <returns></returns>
+        public override string GetSavedVersion(string filename)
+        {
+            throw new NotImplementedException();
+        }
+
+        
         /// <summary>
         /// A private class used to represent the cells of a spreadsheet.
         /// A cell's contents can be a string, a double, or a Formula.

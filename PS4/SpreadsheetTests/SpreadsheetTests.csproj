@@ -37,12 +37,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Formula, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
+    <Reference Include="Formula">
       <HintPath>..\..\PS3\Formula\bin\Debug\Formula.dll</HintPath>
     </Reference>
-    <Reference Include="SpreadsheetUtilities, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
+    <Reference Include="SpreadsheetUtilities">
       <HintPath>..\..\PS2\SpreadsheetUtilities\bin\Debug\SpreadsheetUtilities.dll</HintPath>
     </Reference>
     <Reference Include="System" />
