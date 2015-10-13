@@ -20,3 +20,10 @@ Implementation:
 		Changed isName function to accomodate the new restrictions on names.
 		Added member varibles and XML comments for each.
 		Started on driver for "SetCellContents"
+
+	Update: 10/13/2015
+		Updated existing tests to new version of methods.
+		"finished" SetCOntentsOfCell method.
+		Implemented 0 and 3 arg constructor.
+		Layed out 4 arg constructor.
+		TODO: 4 arg constructor and Save methods.

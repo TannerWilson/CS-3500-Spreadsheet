@@ -60,11 +60,60 @@ namespace SS
         }
 
         /// <summary>
+        /// Constructs an empty SpreadSheet using the base constructor
+        /// with the validator "isValid"the normalizer "normalize" and the version "version"
+        /// </summary>
+        /// <param name="isValid"></param>
+        /// <param name="normalize"></param>
+        /// <param name="version"></param>
+        public Spreadsheet(Func<string, bool> isValid, Func<string, string> normalize, string version) : base(isValid, normalize, version)
+        {
+            cells = new Dictionary<string, cell>();
+            dependencies = new DependencyGraph();
+        }
+
+        /// <summary>
+        /// Constructs an empty SpreadSheet from a saved file "filePath" using the base constructor
+        /// with the validator "isValid"the normalizer "normalize" and the version "version"
+        /// </summary>
+        /// <param name="filePath"></param>
+        /// <param name="isValid"></param>
+        /// <param name="normalize"></param>
+        /// <param name="version"></param>
+        public Spreadsheet(String filePath, Func<string, bool> isValid, Func<string, string> normalize, string version) : base(isValid, normalize, version)
+        {
+            this.filePath = filePath;
+            cells = new Dictionary<string, cell>();
+            dependencies = new DependencyGraph();
+        }
+
+        /// <summary>
         /// Implemented as documented in "AbstractSpreadsheet"
         /// </summary>
         /// <param name="name"></param>
         /// <returns></returns>
         public override object GetCellValue(string name)
+        {
+            if (name == null || !isName(name))
+                throw new InvalidNameException();
+
+            cell outVal;
+            // If the cell is in changed cells, return its value
+            if (cells.TryGetValue(name, out outVal))
+            {
+                return outVal.getValue();
+            }
+            // Empty string is default cell contents
+            else return "";
+        }
+
+
+        /// <summary>
+        /// Implemented as documented in "AbstractSpreadsheet"
+        /// </summary>
+        /// <param name="filename"></param>
+        /// <returns></returns>
+        public override string GetSavedVersion(string filename)
         {
             throw new NotImplementedException();
         }
@@ -83,6 +132,7 @@ namespace SS
         /// 
         /// Otherwise, returns the contents (as opposed to the value) of the named cell.  The return
         /// value should be either a string, a double, or a Formula.
+        /// </summary>
         public override object GetCellContents(string name)
         {
             if (name == null || !isName(name))
@@ -119,35 +169,6 @@ namespace SS
 
         /// <summary>
         /// Implemented as documented in "AbstractSpreadsheet"
-        /// 
-        /// 
-        /// If content is null, throws an ArgumentNullException.
-        /// 
-        /// Otherwise, if name is null or invalid, throws an InvalidNameException.
-        /// 
-        /// Otherwise, if content parses as a double, the contents of the named
-        /// cell becomes that double.
-        /// 
-        /// Otherwise, if content begins with the character '=', an attempt is made
-        /// to parse the remainder of content into a Formula f using the Formula
-        /// constructor.  There are then three possibilities:
-        /// 
-        ///   (1) If the remainder of content cannot be parsed into a Formula, a 
-        ///       SpreadsheetUtilities.FormulaFormatException is thrown.
-        ///       
-        ///   (2) Otherwise, if changing the contents of the named cell to be f
-        ///       would cause a circular dependency, a CircularException is thrown.
-        ///       
-        ///   (3) Otherwise, the contents of the named cell becomes f.
-        /// 
-        /// Otherwise, the contents of the named cell becomes content.
-        /// 
-        /// If an exception is not thrown, the method returns a set consisting of
-        /// name plus the names of all other cells whose value depends, directly
-        /// or indirectly, on the named cell.
-        /// 
-        /// For example, if name is A1, B1 contains A1*2, and C1 contains B1+A1, the
-        /// set {A1, B1, C1} is returned.
         /// </summary>
         /// <param name="name"></param>
         /// <param name="content"></param>
@@ -170,14 +191,14 @@ namespace SS
             // Content is a formula
             else if (content.ToCharArray()[0] == '=')
             {
+                // Trim off the '=' char
+                char[] toTrim = new char[] { '=' };
+                content.Trim(toTrim);
 
+                return SetCellContents(name, new Formula(content));
             }
             else // Content is a string
                 return SetCellContents(name, content);
-
-
-
-            return new HashSet<string>();
         }
 
         /// <summary>
@@ -198,7 +219,7 @@ namespace SS
             if (cells.TryGetValue(name, out outVal))
             {
                 outVal.setContents(formula);
-
+                outVal.setValue(formula.Evaluate(s => 0));
                 LinkedList<string> reCalc = (LinkedList<string>)GetCellsToRecalculate(name);
                 HashSet<string> result = new HashSet<string>();
 
@@ -209,7 +230,7 @@ namespace SS
             else // No cell named "name" was found
             {
                 // Add cell to changed cells
-                cell adding = new cell(name, formula, null);
+                cell adding = new cell(name, formula, formula.Evaluate(s => 0));
                 cells.Add(name, adding);
 
                 // Add name to dependencies and add its varibles as dependents
@@ -246,7 +267,9 @@ namespace SS
             cell outVal;
             if (cells.TryGetValue(name, out outVal))
             {
+                // Set value and contents
                 outVal.setContents(text);
+                outVal.setValue(text);
 
                 // Return cells to Recalculate
                 LinkedList<string> reCalc = (LinkedList<string>)GetCellsToRecalculate(name);
@@ -285,7 +308,9 @@ namespace SS
             // Check if cell named "name" is in our non-empty cells
             if (cells.TryGetValue(name, out outVal))
             {
+                // Set contents and value
                 outVal.setContents(number);
+                outVal.setValue(number);
 
                 // Return cells to Recalculate
                 LinkedList<string> reCalc = (LinkedList<string>)GetCellsToRecalculate(name);
@@ -367,17 +392,7 @@ namespace SS
             return true;
         }
 
-        /// <summary>
-        /// Implemented as documented in "AbstractSpreadsheet"
-        /// </summary>
-        /// <param name="filename"></param>
-        /// <returns></returns>
-        public override string GetSavedVersion(string filename)
-        {
-            throw new NotImplementedException();
-        }
 
-        
         /// <summary>
         /// A private class used to represent the cells of a spreadsheet.
         /// A cell's contents can be a string, a double, or a Formula.
