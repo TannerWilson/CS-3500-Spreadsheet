@@ -128,7 +128,7 @@ namespace SS.Tests
             test.SetContentsOfCell("A1", "=1+1");
             test.SetContentsOfCell("A2", "1+1");
             test.SetContentsOfCell("A3", "134.6554");
-            test.SetContentsOfCell("A4", "A4+A1"); // A4 dpends on A4, circular
+            test.SetContentsOfCell("A4", "=A4+A1"); // A4 dpends on A4, circular
             test.SetContentsOfCell("A5", "= C2+B5");
             test.SetContentsOfCell("A6", "test");
             test.SetContentsOfCell("A7", "2.54");

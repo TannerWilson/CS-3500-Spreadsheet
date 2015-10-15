@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SpreadsheetUtilities;
+using System.Xml;
 
 namespace SS
 {
@@ -120,11 +121,67 @@ namespace SS
 
         /// <summary>
         /// Implemented as documented in "AbstractSpreadsheet"
+        /// 
+        /// Writes the contents of this spreadsheet to the named file using an XML format.
+        /// The XML elements should be structured as follows:
+        /// 
+        /// <spreadsheet version="version information goes here">
+        /// 
+        /// <cell>
+        /// <name>
+        /// cell name goes here
+        /// </name>
+        /// <contents>
+        /// cell contents goes here
+        /// </contents>    
+        /// </cell>
+        /// 
+        /// </spreadsheet>
+        /// 
+        /// There should be one cell element for each non-empty cell in the spreadsheet.  
+        /// If the cell contains a string, it should be written as the contents.  
+        /// If the cell contains a double d, d.ToString() should be written as the contents.  
+        /// If the cell contains a Formula f, f.ToString() with "=" prepended should be written as the contents.
+        /// 
+        /// If there are any problems opening, writing, or closing the file, the method should throw a
+        /// SpreadsheetReadWriteException with an explanatory message.
+        /// 
         /// </summary>
         /// <param name="filename"></param>
         public override void Save(string filename)
         {
-            throw new NotImplementedException();
+            XmlWriterSettings settings = new XmlWriterSettings();
+            settings.Indent = true;
+
+            XmlWriter writer = XmlWriter.Create(filename, settings);
+            writer.WriteStartDocument();
+            writer.WriteStartElement("spreadsheet");
+            writer.WriteAttributeString("version", Version); // Add version info to start of file
+
+            // Loop through each changed cell
+            foreach(KeyValuePair<string, cell> pair in cells)
+            {
+                // Start cell element
+                writer.WriteStartElement("cell");
+
+                // Write name element
+                writer.WriteStartElement("name");
+                writer.WriteString(pair.Value.getName()); // Get cell and write its name
+                writer.WriteEndElement();
+
+                // Write contents element
+                writer.WriteStartElement("contents");
+                writer.WriteString(pair.Value.getContents().ToString()); // Get cell, get contents and write it as a string
+                writer.WriteEndElement();
+
+                // End cell element
+                writer.WriteEndElement();
+            }
+            // End and close the writer.
+            writer.WriteEndElement();
+            writer.WriteEndDocument();
+            writer.Flush();
+            writer.Close();
         }
 
         /// <summary>
@@ -193,7 +250,7 @@ namespace SS
             {
                 // Trim off the '=' char
                 char[] toTrim = new char[] { '=' };
-                content.Trim(toTrim);
+               content = content.Trim(toTrim);
 
                 return SetCellContents(name, new Formula(content));
             }
@@ -425,7 +482,7 @@ namespace SS
             /// Returns the name of a cell
             /// </summary>
             /// <returns></returns>
-            public Object getName()
+            public string getName()
             {
                 return name;
             }
@@ -491,12 +548,12 @@ namespace SS
             /// <returns></returns>
             public bool setValue(Object obj)
             {
-                if (obj is string || obj is double || obj is FormulaError)
-                {
+               // if (obj is string || obj is double || obj is FormulaError)
+               // {
                     value = obj;
                     return true;
-                }
-                else return false;
+                //}
+                //else return false;
             }
         }
     }
