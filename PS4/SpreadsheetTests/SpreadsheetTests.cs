@@ -120,6 +120,15 @@ namespace SS.Tests
         }
 
         [TestMethod()]
+        [ExpectedException(typeof(ArgumentNullException))]
+        public void SetContentsOfCellTest10()
+        {
+            Spreadsheet test = new Spreadsheet();
+            test.SetContentsOfCell("+", (string) null);
+
+        }
+
+        [TestMethod()]
         [ExpectedException(typeof(CircularException))]
         public void GetNamesOfAllNonemptyCellsTest1()
         {
@@ -128,23 +137,11 @@ namespace SS.Tests
             test.SetContentsOfCell("A1", "=1+1");
             test.SetContentsOfCell("A2", "1+1");
             test.SetContentsOfCell("A3", "134.6554");
-            test.SetContentsOfCell("A4", "=A4+A1"); // A4 dpends on A4, circular
             test.SetContentsOfCell("A5", "= C2+B5");
             test.SetContentsOfCell("A6", "test");
             test.SetContentsOfCell("A7", "2.54");
-            
-            // populate test result list
-            LinkedList<string> expected = new LinkedList<string>();
-            expected.AddLast("A1");
-            expected.AddLast("A2");
-            expected.AddLast("A3");
-            expected.AddLast("A4");
-            expected.AddLast("A5");
-            expected.AddLast("A6");
-            expected.AddLast("A7");
+            test.SetContentsOfCell("A4", "=A4+A1"); // A4 dpends on A4, circular
 
-            LinkedList<string> cells = (LinkedList<string>) test.GetNamesOfAllNonemptyCells();
-            CollectionAssert.AreEqual(expected, cells);
         }
 
         [TestMethod()]
@@ -155,7 +152,7 @@ namespace SS.Tests
             test.SetContentsOfCell("A1", " =1+1");
             test.SetContentsOfCell("A2", "1+1");
             test.SetContentsOfCell("A3", "134.6554");
-            test.SetContentsOfCell("A4", "=f4+m1");
+            test.SetContentsOfCell("A4567", "=f4+m1");
             test.SetContentsOfCell("A5", "=C2+B5");
             test.SetContentsOfCell("A6", "test");
             test.SetContentsOfCell("A7", "2.54");
@@ -165,13 +162,31 @@ namespace SS.Tests
             expected.AddLast("A1");
             expected.AddLast("A2");
             expected.AddLast("A3");
-            expected.AddLast("A4");
+            expected.AddLast("A4567");
             expected.AddLast("A5");
             expected.AddLast("A6");
             expected.AddLast("A7");
 
             LinkedList<string> cells = (LinkedList<string>)test.GetNamesOfAllNonemptyCells();
             CollectionAssert.AreEqual(expected, cells);
+        }
+
+        [TestMethod()]
+        [ExpectedException(typeof(ArgumentNullException))]
+        public void GetNamesOfAllNonemptyCellsTest3()
+        {
+            Spreadsheet test = new Spreadsheet();
+            // populate the test spread sheet
+           
+            test.SetContentsOfCell("A2", "1+1");
+            test.SetContentsOfCell("A3", "134.6554");
+            test.SetContentsOfCell("A4", "=M4+B3"); // A4 dpends on A4, circular
+            test.SetContentsOfCell("A5", "= C2+B5");
+            test.SetContentsOfCell("A6", "test");
+            test.SetContentsOfCell("A7", "2.54");
+           
+            // Exception throwing code
+            test.SetContentsOfCell(null, (string)null);
         }
 
         [TestMethod()]
@@ -215,6 +230,103 @@ namespace SS.Tests
         {
             Spreadsheet test = new Spreadsheet();
             test.GetCellContents(null);
+        }
+
+        [TestMethod()]
+        public void SaveTest1()
+        {
+            Spreadsheet test = new Spreadsheet();
+            // populate the test spread sheet
+            test.SetContentsOfCell("A1", "=1+1");
+            test.SetContentsOfCell("A2", "1+1");
+            test.SetContentsOfCell("A3", "134.6554");
+            test.SetContentsOfCell("A4", "=f4+m1");
+            test.SetContentsOfCell("A5", "=C2+B5");
+            test.SetContentsOfCell("A6", "test");
+            test.SetContentsOfCell("A7", "2.54");
+            test.Save("spreadsheet_test1");
+
+            // populate test result list
+            LinkedList<string> expected = new LinkedList<string>();
+            expected.AddLast("A1");
+            expected.AddLast("A2");
+            expected.AddLast("A3");
+            expected.AddLast("A4");
+            expected.AddLast("A5");
+            expected.AddLast("A6");
+            expected.AddLast("A7");
+
+            // Create a new spreadsheet from the previously saved file
+            Spreadsheet result = new Spreadsheet("spreadsheet_test1", s => true, s => s, "default");
+
+            // Should be the same spreadsheet as before
+            LinkedList<string> cells = (LinkedList<string>)result.GetNamesOfAllNonemptyCells();
+            CollectionAssert.AreEqual(expected, cells);
+        }
+
+        [TestMethod()]
+        public void SaveTest2()
+        {
+            Spreadsheet test = new Spreadsheet();
+            // populate the test spread sheet
+            test.SetContentsOfCell("B1", "=1+1");
+            
+            test.Save("spreadsheet_test2");
+
+            // populate test result list
+            LinkedList<string> expected = new LinkedList<string>();
+            expected.AddLast("B1");
+
+            // Create a new spreadsheet from the previously saved file
+            Spreadsheet result = new Spreadsheet("spreadsheet_test2", s => true, s => s, "default");
+
+            // Should be the same spreadsheet as before
+            LinkedList<string> cells = (LinkedList<string>)result.GetNamesOfAllNonemptyCells();
+            CollectionAssert.AreEqual(expected, cells);
+        }
+
+        [TestMethod()]
+        public void GetCellValueTest1()
+        {
+            Spreadsheet test = new Spreadsheet();
+            test.SetContentsOfCell("A1", "=1+1");
+            test.SetContentsOfCell("A2", "1+1");
+            test.SetContentsOfCell("A3", "5");
+            test.SetContentsOfCell("A4", "=5+1");
+            test.SetContentsOfCell("A5", "10");
+            test.SetContentsOfCell("A6", "test");
+            test.SetContentsOfCell("A7", "2.54");
+            test.SetContentsOfCell("A8", "=A1+A3");
+            test.SetContentsOfCell("A9", "=A3+A1+A4+A8"); // == 5+2+6+7 = 20
+            test.SetContentsOfCell("B1", "=2/0");
+
+            Assert.IsTrue((double) test.GetCellValue("A1") == 2.0);
+            Assert.IsTrue((string)test.GetCellValue("A2") == "1+1");
+            Assert.IsTrue((double)test.GetCellValue("A3") == 5.0);
+            Assert.IsTrue((double)test.GetCellValue("A4") == 6.0);
+            Assert.IsTrue((double)test.GetCellValue("A5") == 10.0);
+            Assert.IsTrue((string)test.GetCellValue("A6") == "test");
+            Assert.IsTrue((double)test.GetCellValue("A7") == 2.54);
+            Assert.IsTrue((double)test.GetCellValue("A8") == 7.0);
+            Assert.IsTrue((double)test.GetCellValue("A9") == 20.0);
+            Assert.IsTrue(test.GetCellValue("B1") is FormulaError);
+
+        }
+
+        [TestMethod()]
+        [ExpectedException(typeof(InvalidNameException))]
+        public void GetCellValueTest2()
+        {
+            Spreadsheet test = new Spreadsheet();
+            test.GetCellValue("--*&");
+        }
+
+        [TestMethod()]
+        public void GetSavedVersionTest()
+        {
+            Spreadsheet test = new Spreadsheet();
+            Assert.IsTrue("default" == test.GetSavedVersion("spreadsheet_test1") );
+
         }
     }
 }

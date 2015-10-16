@@ -35,19 +35,33 @@ namespace SS
         private Boolean changed;
 
         /// <variable>
+        /// Used to save the version information of a SpreadSheet
+        /// </variable>
+        private string version;
+
+        /// <variable>
         /// Used to tell if the document has been changed.
         /// </variable>
         public override bool Changed
         {
             get
             {
-                throw new NotImplementedException();
+                return changed;
             }
 
             protected set
             {
-                throw new NotImplementedException();
+                
             }
+        }
+
+        /// <summary>
+        /// Returns the version string of the current spreadsheet.
+        /// </summary>
+        /// <returns></returns>
+        private string getVersion()
+        {
+            return Version;
         }
 
         /// <summary>
@@ -55,14 +69,14 @@ namespace SS
         /// </summary>
         public Spreadsheet() : base(s => true, s => s, "default")
         {
-
             cells = new Dictionary<string, cell>();
             dependencies = new DependencyGraph();
+            changed = false;
         }
 
         /// <summary>
         /// Constructs an empty SpreadSheet using the base constructor
-        /// with the validator "isValid"the normalizer "normalize" and the version "version"
+        /// with the validator "isValid" the normalizer "normalize" and the version "version"
         /// </summary>
         /// <param name="isValid"></param>
         /// <param name="normalize"></param>
@@ -71,10 +85,11 @@ namespace SS
         {
             cells = new Dictionary<string, cell>();
             dependencies = new DependencyGraph();
+            changed = false;
         }
 
         /// <summary>
-        /// Constructs an empty SpreadSheet from a saved file "filePath" using the base constructor
+        /// Constructs an empty SpreadSheet from a saved XML file "filePath" using the base constructor
         /// with the validator "isValid"the normalizer "normalize" and the version "version"
         /// </summary>
         /// <param name="filePath"></param>
@@ -86,6 +101,66 @@ namespace SS
             this.filePath = filePath;
             cells = new Dictionary<string, cell>();
             dependencies = new DependencyGraph();
+            changed = false;
+
+            // Used to create the actual cell objects from the input XML
+            string name = "";
+            string contents = "";
+            XmlReader reader = XmlReader.Create(filePath);
+            reader.Read();
+            reader.Read(); // Step over the first XML version lable to the "spreadsheet" name
+            while (reader.Read())
+            {
+                // Get version info from the start element
+                if (reader.NodeType == XmlNodeType.Element && reader.Name == "spreadsheet")
+                {
+                    this.Version = reader.GetAttribute(0); 
+                }
+                // Loop into the next element in the reader
+                while (reader.NodeType != XmlNodeType.EndElement)
+                {
+                    reader.Read();
+                    // Enter the cell element
+                    if(reader.Name == "cell")
+                    {
+                        while (reader.NodeType != XmlNodeType.EndElement)
+                        {
+                            reader.Read();
+                            // Enter into name element
+                            if (reader.Name == "name")
+                            {
+                                while (reader.NodeType != XmlNodeType.EndElement)
+                                {
+                                    reader.Read();
+                                    if (reader.NodeType == XmlNodeType.Text)
+                                    {
+                                        // Save name info
+                                        name = reader.Value;
+                                    }
+                                }
+                                reader.Read();
+                            } 
+                            // Enter into contents element
+                            if(reader.Name == "contents")
+                            {
+                                while (reader.NodeType != XmlNodeType.EndElement)
+                                {
+                                    reader.Read();
+                                    if (reader.NodeType == XmlNodeType.Text)
+                                    {
+                                        // Save contents info
+                                        contents = reader.Value;
+                                    }
+                                }
+                                reader.Read();
+                            }
+                        }
+                        // Name and Contents have each been passed over
+                        SetContentsOfCell(name, contents); // Add cell to spreadsheet
+                    }
+                }
+            }
+            reader.Close();
         }
 
         /// <summary>
@@ -116,7 +191,10 @@ namespace SS
         /// <returns></returns>
         public override string GetSavedVersion(string filename)
         {
-            throw new NotImplementedException();
+            // Creates a spreadsheet from given filename 
+            Spreadsheet sheet = new Spreadsheet(filename, s => true, s => s, "default");
+
+            return sheet.getVersion();
         }
 
         /// <summary>
@@ -152,36 +230,44 @@ namespace SS
         {
             XmlWriterSettings settings = new XmlWriterSettings();
             settings.Indent = true;
-
-            XmlWriter writer = XmlWriter.Create(filename, settings);
-            writer.WriteStartDocument();
-            writer.WriteStartElement("spreadsheet");
-            writer.WriteAttributeString("version", Version); // Add version info to start of file
-
-            // Loop through each changed cell
-            foreach(KeyValuePair<string, cell> pair in cells)
+            try
             {
-                // Start cell element
-                writer.WriteStartElement("cell");
+                XmlWriter writer = XmlWriter.Create(filename, settings);
+                writer.WriteStartDocument();
+                writer.WriteStartElement("spreadsheet");
+                writer.WriteAttributeString("version", Version); // Add version info to start of file
 
-                // Write name element
-                writer.WriteStartElement("name");
-                writer.WriteString(pair.Value.getName()); // Get cell and write its name
-                writer.WriteEndElement();
+                // Loop through each changed cell
+                foreach (KeyValuePair<string, cell> pair in cells)
+                {
+                    // Start cell element
+                    writer.WriteStartElement("cell");
 
-                // Write contents element
-                writer.WriteStartElement("contents");
-                writer.WriteString(pair.Value.getContents().ToString()); // Get cell, get contents and write it as a string
-                writer.WriteEndElement();
+                    // Write name element
+                    writer.WriteStartElement("name");
+                    writer.WriteString(pair.Value.getName()); // Get cell and write its name
+                    writer.WriteEndElement();
 
-                // End cell element
+                    // Write contents element
+                    writer.WriteStartElement("contents");
+                    writer.WriteString(pair.Value.getContents().ToString()); // Get cell, get contents and write it as a string
+                    writer.WriteEndElement();
+
+                    // End cell element
+                    writer.WriteEndElement();
+                }
+                // End and close the writer.
                 writer.WriteEndElement();
+                writer.WriteEndDocument();
+                writer.Flush();
+                writer.Close();
             }
-            // End and close the writer.
-            writer.WriteEndElement();
-            writer.WriteEndDocument();
-            writer.Flush();
-            writer.Close();
+            catch(Exception)
+            {
+                throw new SpreadsheetReadWriteException("There was an error writing the XML document");
+            }
+           
+            
         }
 
         /// <summary>
@@ -232,6 +318,8 @@ namespace SS
         /// <returns></returns>
         public override ISet<string> SetContentsOfCell(string name, string content)
         {
+            // Normalize cell name before handled
+            name = Normalize(name);
             // Error checking
             if (content == null)
                 throw new ArgumentNullException("Content was null");
@@ -242,6 +330,7 @@ namespace SS
             // Content is a double
             if (Double.TryParse(content, out value))
             {
+                Changed = true;
                 return SetCellContents(name, value);
             }
 
@@ -252,10 +341,15 @@ namespace SS
                 char[] toTrim = new char[] { '=' };
                content = content.Trim(toTrim);
 
+                Changed = true;
                 return SetCellContents(name, new Formula(content));
             }
             else // Content is a string
+            {
+                Changed = true;
                 return SetCellContents(name, content);
+            }
+                
         }
 
         /// <summary>
@@ -263,20 +357,12 @@ namespace SS
         /// </summary>
         protected override ISet<string> SetCellContents(string name, Formula formula)
         {
-            // Formula null check
-            if (formula == null)
-                throw new ArgumentNullException("Given formula was null");
-
-            // Valid name check
-            if (name == null || !isName(name))
-                throw new InvalidNameException();
-
             // Check if name is in the changed cells
             cell outVal;
             if (cells.TryGetValue(name, out outVal))
             {
                 outVal.setContents(formula);
-                outVal.setValue(formula.Evaluate(s => 0));
+                outVal.setValue(formula.Evaluate(lookUp));
                 LinkedList<string> reCalc = (LinkedList<string>)GetCellsToRecalculate(name);
                 HashSet<string> result = new HashSet<string>();
 
@@ -287,7 +373,7 @@ namespace SS
             else // No cell named "name" was found
             {
                 // Add cell to changed cells
-                cell adding = new cell(name, formula, formula.Evaluate(s => 0));
+                cell adding = new cell(name, formula, formula.Evaluate(lookUp));
                 cells.Add(name, adding);
 
                 // Add name to dependencies and add its varibles as dependents
@@ -312,14 +398,6 @@ namespace SS
         /// </summary>
         protected override ISet<string> SetCellContents(string name, string text)
         {
-            // Text null check
-            if (text == null)
-                throw new ArgumentNullException("Given formula was null");
-
-            // Valid name check
-            if (name == null || !isName(name))
-                throw new InvalidNameException();
-
             // Check if name is in the changed cells
             cell outVal;
             if (cells.TryGetValue(name, out outVal))
@@ -357,10 +435,6 @@ namespace SS
         /// </summary>
         protected override ISet<string> SetCellContents(string name, double number)
         {
-            // Valid name check
-            if (name == null || !isName(name))
-                throw new InvalidNameException();
-
             cell outVal;
             // Check if cell named "name" is in our non-empty cells
             if (cells.TryGetValue(name, out outVal))
@@ -410,6 +484,25 @@ namespace SS
             }
             // Not in dependencies, so has no dependents
             else return new HashSet<string>();
+        }
+
+        
+        /// <summary>
+        /// Used to as a lookUp function for the Formula.Evaluate method.
+        /// Searches for the cell "cellName" and returns its value as a double.
+        /// If the cell has a string or formula error as a value, it returns 0.
+        /// </summary>
+        /// <param name="cellName"></param>
+        /// <returns></returns>
+        protected double lookUp(string cellName)
+        {
+            // Get the value of input cell name
+            object value = GetCellValue(cellName);
+            // If cell's value is a doiuble, return it
+            if (value is double)
+                return (double)value;
+            // else the cell has no numerical value so its value is 0
+            else return 0;
         }
 
         /// <summary>

@@ -32,3 +32,9 @@ Implementation:
 		Implemented "Save" method.
 		Got all previous tests passing with new "SetContentsOfCell" method.
 		Changed Cell's "setValue" method.
+
+	Update 10/15/2015
+		Wrote load from XML file constructor
+		Wrote more tests
+		Finished all methods but Save/Load
+		RE: Save/Load finished and tested. 94.2% code coverage
